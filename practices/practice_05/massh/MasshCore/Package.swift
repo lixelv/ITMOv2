@@ -9,6 +9,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "MasshCore"),
-        .testTarget(name: "MasshCoreTests", dependencies: ["MasshCore"]),
+        .testTarget(name: "MasshCoreTests", dependencies: ["MasshCore"], exclude: ["Fixtures"]),
     ]
 )
