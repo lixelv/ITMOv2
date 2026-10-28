@@ -23,6 +23,9 @@ import (
 func binaries(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o755); err != nil { // unprivileged users inside the Server run these too
+		t.Fatal(err)
+	}
 	for name, pkg := range map[string]string{"massh-agent": "../cmd/massh-agent", "massh-probe": "./probe"} {
 		cmd := exec.Command("go", "build", "-ldflags", "-X main.version=0.1.0", "-o", filepath.Join(dir, name), pkg)
 		cmd.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS=linux", "GOARCH="+runtime.GOARCH)
@@ -86,10 +89,13 @@ func (s *testServer) waitFor(script string, timeout time.Duration) {
 	}
 }
 
-// runAgent starts the test Agent binary in the background, as an unprivileged user unless root is asked.
-func (s *testServer) runAgent() {
+// runAgent starts the test Agent binary in the background as root.
+func (s *testServer) runAgent() { s.runAgentAs("root") }
+
+// runAgentAs starts the test Agent binary in the background as the given user, without extra capabilities.
+func (s *testServer) runAgentAs(user string) {
 	s.t.Helper()
-	s.mustExec("nohup /opt/massh-test/massh-agent >/tmp/agent.log 2>&1 &")
+	s.mustExec(fmt.Sprintf("setpriv --reuid=%[1]s --regid=$(id -g %[1]s) --init-groups -- nohup /opt/massh-test/massh-agent >/tmp/agent.log 2>&1 &", user))
 	s.waitFor("ss -ltn | grep -q 127.0.0.1:12092", 10*time.Second)
 }
 

@@ -51,6 +51,14 @@ func (c *Collector) Collect() snapshot.Snapshot {
 		Overview:      c.overview(cur),
 		Docker:        snapshot.NoDocker(),
 	}
+	if !c.SkipProcesses {
+		procs := c.processes(cur)
+		s.Processes = make([]snapshot.Process, len(procs))
+		for i, p := range procs {
+			s.Processes[i] = p.Process
+		}
+		s.Ports = c.ports(procs)
+	}
 	c.prev = cur
 	return s
 }

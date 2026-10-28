@@ -2,6 +2,7 @@ package collect_test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -14,8 +15,8 @@ import (
 func fixtureRoot(t *testing.T) string {
 	t.Helper()
 	dst := t.TempDir()
-	if err := os.CopyFS(dst, os.DirFS("testdata/root")); err != nil {
-		t.Fatal(err)
+	if out, err := exec.Command("cp", "-R", "testdata/root/.", dst).CombinedOutput(); err != nil {
+		t.Fatalf("copy fixtures: %v\n%s", err, out)
 	}
 	return dst
 }
