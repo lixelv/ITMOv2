@@ -1,0 +1,10 @@
+processor	: 0
+vendor_id	: AuthenticAMD
+model name	: AMD EPYC 7763 64-Core Processor
+cpu MHz		: 2445.406
+
+processor	: 1
+vendor_id	: AuthenticAMD
+model name	: AMD EPYC 7763 64-Core Processor
+cpu MHz		: 2445.406
+
