@@ -63,9 +63,9 @@ struct InspectorContent: View {
             Group {
                 switch tab {
                 case .overview: OverviewView(snapshot: snapshot, history: inspector.history)
-                case .ports: Text("Порты")
-                case .processes: Text("Процессы")
-                case .containers: Text("Контейнеры")
+                case .ports: PortsTable(ports: snapshot.ports)
+                case .processes: ProcessesTable(processes: snapshot.processes)
+                case .containers: ContainersTable(docker: snapshot.docker)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
