@@ -55,12 +55,14 @@ public struct SSHAgentOperations: AgentOperations {
         guard dir.hasPrefix("/tmp/massh-agent.") else { throw AgentOperationError.ssh("mktemp: \(dir)") }
         try await upload(installer, to: "\(dir)/\(Self.installerName)", on: server)
 
-        var script = "sudo sh \(dir)/\(Self.installerName) \(action)"
+        var command = "sh \(dir)/\(Self.installerName) \(action)"
         if action != "uninstall" {
             let arch = try Self.architecture(lines.first ?? "")
             try await upload(try read("massh-agent-linux-\(arch)"), to: "\(dir)/massh-agent", on: server)
-            script += " \(dir)/massh-agent"
+            command += " \(dir)/massh-agent"
         }
+        // Root logins (common on minimal Debian) may have no sudo at all.
+        let script = "if [ \"$(id -u)\" -eq 0 ]; then \(command); else sudo \(command); fi"
         // Interactive: the user types the sudo password in the tab. Reuses massh's connection when there is one.
         return TerminalCommand(
             title: "\(title) — \(server.name)",

@@ -32,7 +32,7 @@ struct AgentLifecycleTests {
 
             // Install, twice: the second run must be harmless.
             let install = try await ops.install(on: it)
-            #expect(install.arguments.last?.hasPrefix("sudo sh /tmp/massh-agent.") == true)
+            #expect(install.arguments.last?.contains("sudo sh /tmp/massh-agent.") == true)
             #expect(!install.arguments.joined().lowercased().contains("password"))
             for command in [install, try await ops.install(on: it)] {
                 let r = try await runInTerminal(command)

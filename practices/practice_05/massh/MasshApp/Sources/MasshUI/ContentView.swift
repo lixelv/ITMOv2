@@ -25,7 +25,6 @@ public struct ContentView: View {
                 Button("Подключиться", systemImage: "terminal") { model.connect() }
                     .help("Открыть терминал к выбранному Server")
                     .disabled(model.selectedServer == nil)
-                    .keyboardShortcut("t", modifiers: [.command, .shift])
                 Button("Добавить Server", systemImage: "plus") { model.editor = .add }
                     .help("Добавить Server в ~/.ssh/config")
             }

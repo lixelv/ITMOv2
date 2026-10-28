@@ -17,15 +17,21 @@ struct MasshApp: App {
         .commands {
             SidebarCommands()
             InspectorCommands()
+            ServerCommands(model: model)
         }
     }
 }
 
 extension Dependencies {
-    /// MasshCore fakes until the real implementations are wired in. `MASSH_FAKE_SCENARIO` picks a fake
-    /// observation scenario for demos: live, noAgent, outdated, drops, noDocker.
+    /// Real MasshCore by default. `MASSH_FAKE=1` runs on fakes (`MASSH_FAKE_SCENARIO`: live, noAgent, outdated,
+    /// drops, noDocker); `MASSH_SSH_CONFIG=<file>` uses another ssh config instead of `~/.ssh/config`.
     static func live() -> Dependencies {
-        let scenario: FakeObservationService.Scenario = switch ProcessInfo.processInfo.environment["MASSH_FAKE_SCENARIO"] {
+        let env = ProcessInfo.processInfo.environment
+        guard env["MASSH_FAKE"] == "1" else {
+            let binaries = Bundle.main.resourceURL!.appending(path: "agent")
+            return .live(agentBinaries: binaries, configFile: env["MASSH_SSH_CONFIG"].map { URL(filePath: $0) })
+        }
+        let scenario: FakeObservationService.Scenario = switch env["MASSH_FAKE_SCENARIO"] {
         case "noAgent": .noAgent
         case "outdated": .outdatedAgent
         case "drops": .dropsConnection(after: 5)

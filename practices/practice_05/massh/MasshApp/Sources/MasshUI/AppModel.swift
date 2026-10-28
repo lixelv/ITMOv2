@@ -8,12 +8,32 @@ public struct Dependencies: Sendable {
     public var monitor: any ReachabilityMonitor
     public var observation: any ObservationService
     public var agent: any AgentOperations
+    /// Command for a plain terminal tab to a Server.
+    public var terminal: @Sendable (Server) -> TerminalCommand
 
-    public init(store: any ServerStore, monitor: any ReachabilityMonitor, observation: any ObservationService, agent: any AgentOperations) {
+    public init(
+        store: any ServerStore, monitor: any ReachabilityMonitor, observation: any ObservationService,
+        agent: any AgentOperations, terminal: @escaping @Sendable (Server) -> TerminalCommand = { .ssh($0) }
+    ) {
         self.store = store
         self.monitor = monitor
         self.observation = observation
         self.agent = agent
+        self.terminal = terminal
+    }
+
+    /// The real thing: `~/.ssh/config`, the system `ssh`, and the Agent binaries bundled in `agentBinaries`.
+    /// `configFile` replaces `~/.ssh/config` for both massh and the `ssh` it runs (handy for testing).
+    public static func live(agentBinaries: URL, configFile: URL? = nil) -> Dependencies {
+        let ssh = SSHCommand(configFile: configFile)
+        let store = configFile.map { SSHConfigStore(configURL: $0) } ?? SSHConfigStore()
+        return Dependencies(
+            store: store,
+            monitor: SSHReachabilityMonitor(ssh: ssh),
+            observation: SSHObservationService(ssh: ssh),
+            agent: SSHAgentOperations(ssh: ssh, binaries: agentBinaries),
+            terminal: { .ssh($0, using: ssh) }
+        )
     }
 
     public static func fake(
@@ -129,6 +149,8 @@ public final class AppModel {
         let changed = list != servers
         servers = list
         if let name = selectedServerName, !list.contains(where: { $0.name == name }) { selectedServerName = nil }
+        // The selection may arrive before its Server does (just added), or the Server may have been edited.
+        if inspector.server != selectedServer { inspector.observe(selectedServer) }
         if changed { watchStatuses() }
     }
 
@@ -146,7 +168,7 @@ public final class AppModel {
 
     public func connect(_ server: Server? = nil) {
         guard let server = server ?? selectedServer else { return }
-        open(TerminalTab(serverName: server.name, command: .ssh(server)))
+        open(TerminalTab(serverName: server.name, command: dependencies.terminal(server)))
     }
 
     public func open(_ tab: TerminalTab) {

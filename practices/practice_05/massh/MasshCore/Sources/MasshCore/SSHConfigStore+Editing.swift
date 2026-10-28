@@ -95,8 +95,11 @@ extension SSHConfigDocument {
         let blocks = blocks
         let firstTrailing = (blocks.lastIndex { !$0.isWildcardOnly } ?? -1) + 1
         if firstTrailing < blocks.count {
+            // Comments right above the catch-all block describe it; insert above them.
+            var at = blocks[firstTrailing].header
+            while at > 0, lines[at - 1].content.trimmingCharacters(in: .whitespaces).hasPrefix("#") { at -= 1 }
             newLines.append(Line(content: "", terminator: nl))
-            lines.insert(contentsOf: newLines, at: blocks[firstTrailing].header)
+            lines.insert(contentsOf: newLines, at: at)
             return
         }
         if let last = lines.indices.last {

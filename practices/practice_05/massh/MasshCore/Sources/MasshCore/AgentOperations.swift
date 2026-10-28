@@ -13,8 +13,8 @@ public struct TerminalCommand: Sendable, Hashable {
     }
 
     /// `ssh <server>` as the user would type it.
-    public static func ssh(_ server: Server) -> TerminalCommand {
-        TerminalCommand(title: server.name, executable: "/usr/bin/ssh", arguments: [server.name])
+    public static func ssh(_ server: Server, using ssh: SSHCommand = SSHCommand()) -> TerminalCommand {
+        TerminalCommand(title: server.name, executable: ssh.executable, arguments: ssh.baseArguments + [server.name])
     }
 }
 

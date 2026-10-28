@@ -105,6 +105,24 @@ struct SSHConfigEditTests {
         #expect(try await home.store().servers().map(\.name) == ["bastion", "web-1", "db-1"])
     }
 
+    @Test func addKeepsACommentWithTheBlockItDescribes() async throws {
+        let home = try home("Host a\n  HostName 1.1.1.1\n\n# defaults for everything\nHost *\n  User me\n")
+        defer { home.remove() }
+        try await home.store().add(ServerFields(name: "b", hostName: "2.2.2.2"))
+        #expect(try home.read(".ssh/config") == """
+        Host a
+          HostName 1.1.1.1
+
+        Host b
+          HostName 2.2.2.2
+
+        # defaults for everything
+        Host *
+          User me
+
+        """)
+    }
+
     @Test func addToEmptyOrMissingConfig() async throws {
         let home = try TempHome()
         defer { home.remove() }
