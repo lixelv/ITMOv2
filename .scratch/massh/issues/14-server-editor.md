@@ -4,10 +4,14 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Форма добавления из тулбара; новый Server появляется в Server List
-- [ ] Форма правки из контекстного меню
-- [ ] Удаление только после подтверждения
-- [ ] Server из `Include` открываются в режиме только для чтения
-- [ ] Ошибка хранилища показывается в форме
+- [x] Форма добавления из тулбара; новый Server появляется в Server List
+- [x] Форма правки из контекстного меню
+- [x] Удаление только после подтверждения
+- [x] Server из `Include` открываются в режиме только для чтения
+- [x] Ошибка хранилища показывается в форме
+
+## Comments
+
+- Implementation note: the background UI driver could not overwrite the IdentityFile text field during the manual check; the field works with the keyboard. Edits from outside (vim) are picked up live.

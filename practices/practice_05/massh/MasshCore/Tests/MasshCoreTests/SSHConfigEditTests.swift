@@ -160,6 +160,15 @@ struct SSHConfigEditTests {
         #expect(try home.read(".ssh/config") == "Host web-1\n  HostName 1.2.3.4\n")
     }
 
+    @Test func editingOneNameOfASharedBlockLeavesTheOtherNamesAlone() async throws {
+        let home = try home("Host web-1 web1\n  HostName 1.2.3.4\n  ForwardAgent yes\n\nHost *\n  User me\n")
+        defer { home.remove() }
+        try await home.store().update("web1", to: ServerFields(name: "web1", hostName: "5.6.7.8"))
+        #expect(try home.read(".ssh/config") == "Host web-1\n  HostName 1.2.3.4\n  ForwardAgent yes\n\nHost web1\n  HostName 5.6.7.8\n  ForwardAgent yes\n\nHost *\n  User me\n")
+        let servers = try await home.store().servers()
+        #expect(servers.map(\.hostName) == ["1.2.3.4", "5.6.7.8"])
+    }
+
     @Test func everyWriteMakesABackupOfThePreviousFile() async throws {
         let home = try home()
         defer { home.remove() }

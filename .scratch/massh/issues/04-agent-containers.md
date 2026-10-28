@@ -4,9 +4,13 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Container перечислены с именем, образом, статусом, CPU %, RAM и лимитом, портами
-- [ ] Порт, опубликованный контейнером, принадлежит Container, а не процессу docker-proxy
-- [ ] Без Docker Snapshot содержит признак «Docker не установлен» и Agent не падает
-- [ ] Интеграционные тесты: контейнер с Docker и тестовым контейнером; контейнер без Docker
+- [x] Container перечислены с именем, образом, статусом, CPU %, RAM и лимитом, портами
+- [x] Порт, опубликованный контейнером, принадлежит Container, а не процессу docker-proxy
+- [x] Без Docker Snapshot содержит признак «Docker не установлен» и Agent не падает
+- [x] Интеграционные тесты: контейнер с Docker и тестовым контейнером; контейнер без Docker
+
+## Comments
+
+- Known limitation: the `massh` user joins group `docker` only if the group exists at install time. If Docker is installed later, run "Обновить Agent" once so the Agent can reach the Docker socket.

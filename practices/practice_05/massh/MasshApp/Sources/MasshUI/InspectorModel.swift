@@ -25,7 +25,8 @@ public final class InspectorModel {
         public var id: Date { time }
     }
 
-    public static let historyLimit = 600
+    /// Samples kept for charts: the whole connection, up to a day at 1 Hz (a few MB at most).
+    public static let historyLimit = 86_400
 
     public private(set) var server: Server?
     public private(set) var connection: Connection = .idle

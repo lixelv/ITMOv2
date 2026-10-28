@@ -153,7 +153,7 @@ struct HistoryChart: View {
     var body: some View {
         Chart {
             ForEach(series, id: \.name) { s in
-                ForEach(history) { sample in
+                ForEach(points) { sample in
                     LineMark(x: .value("Время", sample.time), y: .value(s.name, sample[keyPath: s.value]))
                         .foregroundStyle(by: .value("Ряд", s.name))
                         .interpolationMethod(.monotone)
@@ -175,6 +175,13 @@ struct HistoryChart: View {
         .chartYScale(domain: percent ? 0...100 : 0...max(1, maxValue * 1.2))
         .frame(height: 56)
         .accessibilityLabel("График: \(series.map(\.name).joined(separator: ", ")) с момента подключения")
+    }
+
+    /// At most ~300 points are drawn however long the connection has been open.
+    private var points: [InspectorModel.Sample] {
+        let step = max(1, history.count / 300)
+        guard step > 1 else { return history }
+        return stride(from: 0, to: history.count, by: step).map { history[$0] }
     }
 
     private var maxValue: Double {

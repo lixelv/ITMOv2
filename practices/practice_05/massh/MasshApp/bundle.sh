@@ -15,6 +15,9 @@ for bundle in "$bin"/*.bundle; do [ -e "$bundle" ] && cp -R "$bundle" "$app/Cont
 cp ../agent/dist/massh-agent-linux-amd64 ../agent/dist/massh-agent-linux-arm64 ../agent/dist/massh-agent-install.sh \
 	"$app/Contents/Resources/agent/"
 version=$(cat ../agent/VERSION)
+# MasshCore compares installed Agents against its own copy of the version; the two must agree.
+grep -q "bundledVersion = \"$version\"" ../MasshCore/Sources/MasshCore/AgentOperations.swift ||
+	{ echo "agent/VERSION ($version) differs from AgentRelease.bundledVersion" >&2; exit 1; }
 cat >"$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

@@ -113,6 +113,11 @@ extension SSHConfigDocument {
 
     mutating func updateHost(_ name: String, to fields: ServerFields) {
         guard var block = block(named: name) else { return }
+        if block.patterns.count > 1 {
+            // `Host a b`: give this Server a block of its own (a copy) so the other names keep their settings.
+            guard let copy = splitOff(name, from: block) else { return }
+            block = copy
+        }
         if fields.name != name {
             rewriteHeader(of: block) { patterns in patterns.map { $0 == name ? fields.name : $0 } }
         }
@@ -153,6 +158,19 @@ extension SSHConfigDocument {
         } else if i == lines.count, i > 0, lines[i - 1].isBlank {
             lines.removeLast()
         }
+    }
+
+    /// Drops `name` from a shared block and inserts a copy of the block for `name` right after it.
+    private mutating func splitOff(_ name: String, from block: Block) -> Block? {
+        let lastDirective = (block.header..<block.end).last { lines[$0].directive != nil } ?? block.header
+        var copy = Array(lines[block.header...lastDirective])
+        if copy[copy.count - 1].terminator.isEmpty { copy[copy.count - 1].terminator = terminator }
+        if let d = copy[0].directive { copy[0].content = d.prefix + Self.quote(name) + d.suffix }
+        rewriteHeader(of: block) { patterns in patterns.filter { $0 != name } }
+        if lines[lastDirective].terminator.isEmpty { lines[lastDirective].terminator = terminator }
+        let at = lastDirective + 1
+        lines.insert(contentsOf: [Line(content: "", terminator: terminator)] + copy, at: at)
+        return self.block(named: name)
     }
 
     private mutating func rewriteHeader(of block: Block, _ transform: ([String]) -> [String]) {

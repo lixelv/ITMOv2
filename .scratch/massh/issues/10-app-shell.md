@@ -4,11 +4,15 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Минимальная версия — macOS 26, App Sandbox выключен
-- [ ] Трёхколоночная раскладка; инспектор скрывается/показывается кнопкой
-- [ ] Server List с отметками статуса из фейкового монитора
-- [ ] Server из `Include` визуально отличаются (только для чтения)
-- [ ] Стандартные контролы, Liquid Glass, светлая и тёмная тема
-- [ ] SwiftUI Previews на фейках
+- [x] Минимальная версия — macOS 26, App Sandbox выключен
+- [x] Трёхколоночная раскладка; инспектор скрывается/показывается кнопкой
+- [x] Server List с отметками статуса из фейкового монитора
+- [x] Server из `Include` визуально отличаются (только для чтения)
+- [x] Стандартные контролы, Liquid Glass, светлая и тёмная тема
+- [x] SwiftUI Previews на фейках
+
+## Comments
+
+- MasshApp is a SwiftPM package (`MasshUI` library with Previews + `massh` executable) bundled by `MasshApp/bundle.sh`, instead of an Xcode project. SwiftTerm is pinned to 1.11.2: 1.12+ needs the separately downloaded Metal toolchain.

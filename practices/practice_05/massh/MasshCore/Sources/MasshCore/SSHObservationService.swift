@@ -30,7 +30,7 @@ public struct SSHObservationService: ObservationService {
         /// Silence after which the connection is considered lost.
         var staleAfter: Duration = .seconds(5)
         /// How often to look for an Agent again after "no Agent".
-        var agentRecheck: Duration = .seconds(3)
+        var agentRecheck: Duration = .seconds(10)
         var reconnectDelays: [Duration] = [.seconds(1), .seconds(2), .seconds(5), .seconds(10)]
     }
 
