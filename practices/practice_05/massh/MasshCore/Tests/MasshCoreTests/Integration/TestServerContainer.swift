@@ -22,15 +22,15 @@ final class TestServerContainer: @unchecked Sendable {
         dir = URL(filePath: "/tmp/massh-it-\(UUID().uuidString.prefix(6))")
         try FileManager.default.createDirectory(at: dir.appending(path: "cm"), withIntermediateDirectories: true)
 
+        // A fixed host port, so the Server keeps its address across `docker restart`.
+        sshPort = try SSHTunnel.freeLocalPort()
         let dist = repoRoot.appending(path: "agent/dist").path
         try await Self.run(Self.docker, [
             "run", "-d", "--rm", "--name", name, "--privileged", "--cgroupns=host",
             "-v", "/sys/fs/cgroup:/sys/fs/cgroup:rw", "--tmpfs", "/run", "--tmpfs", "/run/lock",
             "-v", "/var/lib/docker", "-v", "/var/lib/containerd",
-            "-v", "\(dist):/opt/massh-test:ro", "-p", "127.0.0.1::22", image,
+            "-v", "\(dist):/opt/massh-test:ro", "-p", "127.0.0.1:\(sshPort):22", image,
         ])
-        let mapped = try await Self.run(Self.docker, ["port", name, "22/tcp"])
-        sshPort = Int(mapped.split(separator: "\n")[0].split(separator: ":").last!)!
 
         let key = dir.appending(path: "id_ed25519")
         try await Self.run("/usr/bin/ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-f", key.path])
