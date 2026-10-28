@@ -1,0 +1,43 @@
+{
+  "formatVersion": 2,
+  "agentVersion": "0.1.0",
+  "time": "2026-10-28T12:00:00Z",
+  "overview": {
+    "os": "Ubuntu 24.04.1 LTS",
+    "kernel": "6.8.0-45-generic",
+    "uptimeSeconds": 864210,
+    "loadAverage": [
+      0.42,
+      0.35,
+      0.3
+    ],
+    "cpu": {
+      "model": "AMD EPYC 7763 64-Core Processor",
+      "cores": 2,
+      "usagePercent": 23.5,
+      "perCorePercent": [
+        30,
+        17
+      ]
+    },
+    "memory": {
+      "totalBytes": 4110417920,
+      "usedBytes": 1824522240
+    },
+    "swap": {
+      "totalBytes": 2147479552,
+      "usedBytes": 0
+    },
+    "disks": [],
+    "network": {
+      "rxBytesPerSecond": 15360,
+      "txBytesPerSecond": 4096
+    }
+  },
+  "ports": [],
+  "processes": [],
+  "docker": {
+    "available": true,
+    "containers": []
+  }
+}
