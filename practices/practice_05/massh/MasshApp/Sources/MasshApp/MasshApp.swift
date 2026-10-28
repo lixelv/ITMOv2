@@ -22,6 +22,16 @@ struct MasshApp: App {
 }
 
 extension Dependencies {
-    /// MasshCore fakes until the real implementations are wired in; `MASSH_FAKE=1` keeps them for demos.
-    static func live() -> Dependencies { .fake() }
+    /// MasshCore fakes until the real implementations are wired in. `MASSH_FAKE_SCENARIO` picks a fake
+    /// observation scenario for demos: live, noAgent, outdated, drops, noDocker.
+    static func live() -> Dependencies {
+        let scenario: FakeObservationService.Scenario = switch ProcessInfo.processInfo.environment["MASSH_FAKE_SCENARIO"] {
+        case "noAgent": .noAgent
+        case "outdated": .outdatedAgent
+        case "drops": .dropsConnection(after: 5)
+        case "noDocker": .dockerMissing
+        default: .live
+        }
+        return .fake(scenario: scenario)
+    }
 }

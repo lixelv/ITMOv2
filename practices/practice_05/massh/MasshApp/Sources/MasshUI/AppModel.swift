@@ -41,6 +41,8 @@ public struct TerminalTab: Identifiable, Hashable {
     public var serverName: String
     public var command: TerminalCommand
     public var state: State = .running
+    /// Set for installer tabs: a successful run reconnects the inspector to pick up the new Agent.
+    public var isAgentOperation = false
     /// Bumped to start the command again in the same tab.
     public var generation = 0
 }
@@ -161,6 +163,10 @@ public final class AppModel {
     public func terminalExited(_ tabID: TerminalTab.ID, code: Int32?) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         tabs[index].state = .exited(code: code)
+        let tab = tabs[index]
+        if tab.isAgentOperation, code == 0, tab.serverName == inspector.server?.name {
+            inspector.reconnect()
+        }
     }
 
     public func restart(_ tabID: TerminalTab.ID) {
@@ -208,7 +214,9 @@ public final class AppModel {
                 server = s
                 command = try await dependencies.agent.uninstall(from: s)
             }
-            open(TerminalTab(serverName: server.name, command: command))
+            var tab = TerminalTab(serverName: server.name, command: command)
+            tab.isAgentOperation = true
+            open(tab)
         } catch {
             alertMessage = error.localizedDescription
         }
