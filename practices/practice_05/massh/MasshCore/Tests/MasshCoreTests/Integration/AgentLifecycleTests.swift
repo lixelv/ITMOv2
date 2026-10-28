@@ -71,6 +71,26 @@ struct AgentLifecycleTests {
         }
     }
 
+    /// Shell start-up files that print (fastfetch, MOTD-style echoes) must not break preparing the install.
+    @Test func noisyLoginShellIsIgnored() async throws {
+        try await withTestServer { box in
+            try await box.exec("""
+            echo 'tester ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/tester && chmod 440 /etc/sudoers.d/tester
+            printf 'echo "  .-/+oossssoo+/-.   tester@box"\\necho "x86_64 /tmp/massh-agent.fake"\\n' > /tmp/banner
+            cat /tmp/banner /home/tester/.bashrc > /tmp/bashrc && mv /tmp/bashrc /home/tester/.bashrc && chown tester /home/tester/.bashrc
+            """)
+            // The banner really shows up in non-interactive ssh commands.
+            let probe = try await Subprocess.run(box.ssh.executable, box.ssh.baseArguments + ["it", "true"])
+            #expect(probe.output.contains("tester@box"))
+
+            let ops = SSHAgentOperations(ssh: box.ssh, binaries: Self.dist)
+            let install = try await ops.install(on: server("it"))
+            let run = try await runInTerminal(install)
+            #expect(run.status == 0, "\(run.output)\(run.errorOutput)")
+            #expect(try await box.exec("systemctl is-active massh-agent").hasPrefix("active"))
+        }
+    }
+
     /// An Agent build with another version, next to the bundled installer.
     func buildAgent(version: String) async throws -> URL {
         let dir = URL(filePath: "/tmp/massh-agent-\(version)-\(UUID().uuidString.prefix(4))")
@@ -90,6 +110,13 @@ struct AgentLifecycleTests {
 
 @Suite("Agent operations without a Server")
 struct AgentOperationsTests {
+    @Test func onlyTheCommandsOwnOutputCounts() {
+        let fence = "__MASSH_test__"
+        let noisy = "  .-/+oossssoo+/-.  me@box\nx86_64 decoy\n\(fence)\nx86_64\nsystemd\n\n\(fence)\nbye\n"
+        #expect(SSHAgentOperations.fencedOutput(noisy, fence: fence) == "x86_64\nsystemd\n")
+        #expect(SSHAgentOperations.fencedOutput("plain", fence: fence) == "plain")
+    }
+
     @Test func architectures() throws {
         #expect(try SSHAgentOperations.architecture("x86_64") == "amd64")
         #expect(try SSHAgentOperations.architecture("aarch64") == "arm64")

@@ -45,7 +45,7 @@ public struct SSHAgentOperations: AgentOperations {
     private func prepare(_ server: Server, action: String, title: String) async throws -> TerminalCommand {
         try FileManager.default.createDirectory(at: ssh.controlDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
-        let probe = try await remote(server, "uname -m; test -d /run/systemd/system && echo systemd")
+        let probe = try await remote(server, "uname -m; if [ -d /run/systemd/system ]; then echo systemd; fi")
         let lines = probe.split(separator: "\n").map(String.init)
         guard lines.contains("systemd") else { throw AgentOperationError.noSystemd }
 
@@ -88,16 +88,29 @@ public struct SSHAgentOperations: AgentOperations {
     }
 
     @discardableResult
+    /// Runs `command` on the Server and returns only its own output. Shell start-up files may print anything
+    /// (fastfetch, MOTD-style echoes), so the command's output is fenced with markers and the rest is dropped.
     private func remote(_ server: Server, _ command: String, stdin: Data? = nil) async throws -> String {
+        let fence = "__MASSH_\(UUID().uuidString.prefix(8))__"
+        let fenced = "printf '\\n\(fence)\\n'; \(command); status=$?; printf '\\n\(fence)\\n'; exit $status"
         let result = try await Subprocess.run(
             ssh.executable,
-            ssh.multiplexed(master: true) + ["-o", "ControlPersist=no", "-o", "ConnectTimeout=10", server.name, command],
+            ssh.multiplexed(master: true) + ["-o", "ControlPersist=no", "-o", "ConnectTimeout=10", server.name, fenced],
             stdin: stdin, timeout: .seconds(120)
         )
         guard result.status == 0 else {
             throw AgentOperationError.ssh(result.errorOutput.trimmingCharacters(in: .whitespacesAndNewlines))
         }
-        return result.output
+        return Self.fencedOutput(result.output, fence: fence)
+    }
+
+    /// The text between the first and last fence line; the whole output when the fences are missing.
+    static func fencedOutput(_ output: String, fence: String) -> String {
+        let lines = output.components(separatedBy: "\n")
+        guard let start = lines.firstIndex(of: fence), let end = lines.lastIndex(of: fence), start < end else {
+            return output
+        }
+        return lines[(start + 1)..<end].joined(separator: "\n")
     }
 
     private func upload(_ data: Data, to path: String, on server: Server) async throws {
