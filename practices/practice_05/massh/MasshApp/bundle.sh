@@ -23,8 +23,9 @@ xcrun xcstringstool compile Resources/Localizable.xcstrings --output-directory "
 # English is the source language: an empty en.lproj makes it an explicit localization, not just a fallback.
 mkdir -p "$app/Contents/Resources/en.lproj" "$app/Contents/Resources/MasshCore_MasshCore.bundle/Contents/Resources/en.lproj"
 # App icon made in Icon Composer: Liquid Glass Assets.car plus a classic .icns.
-xcrun actool Resources/AppIcon.icon --compile "$app/Contents/Resources" --platform macosx \
-	--minimum-deployment-target 26.0 --app-icon AppIcon \
+# AccentColor (Geist blue) from the asset catalog tints standard controls.
+xcrun actool Resources/AppIcon.icon Resources/Assets.xcassets --compile "$app/Contents/Resources" --platform macosx \
+	--minimum-deployment-target 26.0 --app-icon AppIcon --accent-color AccentColor \
 	--output-partial-info-plist "$scratch/AppIcon-partial.plist" >/dev/null
 cat >"$app/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -40,6 +41,7 @@ cat >"$app/Contents/Info.plist" <<PLIST
 	<key>CFBundleLocalizations</key><array><string>en</string><string>ru</string></array>
 	<key>CFBundleIconFile</key><string>AppIcon</string>
 	<key>CFBundleIconName</key><string>AppIcon</string>
+	<key>NSAccentColorName</key><string>AccentColor</string>
 	<key>CFBundleShortVersionString</key><string>$version</string>
 	<key>CFBundleVersion</key><string>$version</string>
 	<key>LSMinimumSystemVersion</key><string>26.0</string>

@@ -48,6 +48,10 @@ public final class InspectorModel {
     /// Switches to another Server; history starts over.
     public func observe(_ server: Server?) {
         task?.cancel()
+        releaseTask?.cancel()
+        releaseTask = nil
+        held = nil
+        heldSince = nil
         self.server = server
         snapshot = nil
         receivedAt = nil
@@ -75,17 +79,51 @@ public final class InspectorModel {
         case .connectionLost(let reason): connection = .lost(reason: reason)
         case .reconnecting(let attempt): connection = .reconnecting(attempt: attempt)
         case .snapshot(let s):
-            connection = .live
-            snapshot = s
-            receivedAt = .now
-            history.append(Sample(
-                time: s.time,
-                cpuPercent: s.overview.cpu.usagePercent,
-                memoryPercent: s.overview.memory.fraction * 100,
-                rxBytesPerSecond: Double(s.overview.network.rxBytesPerSecond),
-                txBytesPerSecond: Double(s.overview.network.txBytesPerSecond)
-            ))
-            if history.count > Self.historyLimit { history.removeFirst(history.count - Self.historyLimit) }
+            receive(s)
         }
+    }
+
+    /// Newest Snapshot not yet shown because the user is typing.
+    @ObservationIgnored private var held: Snapshot?
+    @ObservationIgnored private var heldSince: ContinuousClock.Instant?
+    @ObservationIgnored private var releaseTask: Task<Void, Never>?
+
+    /// Typing has priority: while keys are being pressed the Snapshot waits (at most 2 s) and the newest one is shown
+    /// in the next pause, so relayouting the inspector never delays a terminal echo.
+    private func receive(_ snapshot: Snapshot) {
+        guard TypingActivity.isTyping() || held != nil else {
+            apply(snapshot)
+            return
+        }
+        held = snapshot
+        if heldSince == nil { heldSince = .now }
+        guard releaseTask == nil else { return }
+        releaseTask = Task { [weak self] in
+            while let self, !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(150))
+                let waited = self.heldSince.map { ContinuousClock.now - $0 } ?? .zero
+                if !TypingActivity.isTyping() || waited > .seconds(2) {
+                    if let held = self.held { self.apply(held) }
+                    self.held = nil
+                    self.heldSince = nil
+                    self.releaseTask = nil
+                    return
+                }
+            }
+        }
+    }
+
+    private func apply(_ s: Snapshot) {
+        connection = .live
+        snapshot = s
+        receivedAt = .now
+        history.append(Sample(
+            time: s.time,
+            cpuPercent: s.overview.cpu.usagePercent,
+            memoryPercent: s.overview.memory.fraction * 100,
+            rxBytesPerSecond: Double(s.overview.network.rxBytesPerSecond),
+            txBytesPerSecond: Double(s.overview.network.txBytesPerSecond)
+        ))
+        if history.count > Self.historyLimit { history.removeFirst(history.count - Self.historyLimit) }
     }
 }

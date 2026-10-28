@@ -46,7 +46,7 @@ private struct TerminalPane: View {
         }
         .id(tab.generation) // a new generation starts the command again
         .padding(.leading, 6)
-        .background(Color(nsColor: .textBackgroundColor))
+        .background(Geist.background)
         .overlay(alignment: .bottom) {
             if case .exited(let code) = tab.state {
                 SessionEndedBar(code: code, restart: { model.restart(tab.id) }, close: { model.close(tab.id) })

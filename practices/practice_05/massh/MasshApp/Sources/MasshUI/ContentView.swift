@@ -62,6 +62,7 @@ public struct ContentView: View {
         } message: {
             Text(model.alertMessage ?? "")
         }
+        .tint(Geist.blue)
         .task { model.start() }
     }
 }

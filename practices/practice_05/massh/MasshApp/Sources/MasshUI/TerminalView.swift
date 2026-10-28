@@ -12,7 +12,7 @@ struct TerminalSurface: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(onExit: onExit) }
 
     func makeNSView(context: Context) -> LocalProcessTerminalView {
-        let view = LocalProcessTerminalView(frame: .zero)
+        let view = MasshTerminalView(frame: .zero)
         view.processDelegate = context.coordinator
         view.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
         view.optionAsMetaKey = true
@@ -44,13 +44,14 @@ struct TerminalSurface: NSViewRepresentable {
         }
     }
 
-    /// SwiftTerm resolves colors once, so the system colors are re-applied whenever light/dark changes.
+    /// Geist (Vercel) terminal colors. SwiftTerm resolves colors once, so they are re-applied on every light/dark change.
     private static func applyColors(to view: LocalProcessTerminalView) {
-        view.effectiveAppearance.performAsCurrentDrawingAppearance {
-            view.nativeBackgroundColor = NSColor.textBackgroundColor.usingColorSpace(.sRGB) ?? .textBackgroundColor
-            view.nativeForegroundColor = NSColor.textColor.usingColorSpace(.sRGB) ?? .textColor
-            view.caretColor = NSColor.controlAccentColor.usingColorSpace(.sRGB) ?? .controlAccentColor
-        }
+        let dark = view.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        view.nativeBackgroundColor = Geist.nsColor(dark ? 0x000000 : 0xFFFFFF)
+        view.nativeForegroundColor = Geist.nsColor(dark ? 0xEDEDED : 0x171717)
+        view.caretColor = Geist.nsColor(dark ? 0xEDEDED : 0x171717)
+        view.selectedTextBackgroundColor = Geist.nsColor(dark ? 0x00418B : 0xCDE6FF)
+        view.installColors(Geist.ansi(dark: dark).map(Geist.terminalColor))
         view.needsDisplay = true
     }
 

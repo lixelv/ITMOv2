@@ -10,8 +10,8 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../MasshCore"),
-        // 1.12+ needs the separately downloaded Metal toolchain to build.
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm", exact: "1.11.2"),
+        // SwiftTerm 1.11.2 with a lower-latency redraw; see Vendor/SwiftTerm/PATCHES.md.
+        .package(path: "Vendor/SwiftTerm"),
     ],
     targets: [
         // Views and view models; SwiftUI Previews run here on MasshCore fakes.

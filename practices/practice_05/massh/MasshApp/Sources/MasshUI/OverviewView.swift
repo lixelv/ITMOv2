@@ -110,8 +110,8 @@ struct UsageGauge: View {
     }
 
     private var tint: Color {
-        guard warnsWhenFull else { return .accentColor }
-        return fraction > 0.9 ? .red : fraction > 0.8 ? .orange : .accentColor
+        guard warnsWhenFull else { return Geist.blue }
+        return fraction > 0.9 ? Geist.red : fraction > 0.8 ? Geist.amber : Geist.blue
     }
 }
 
@@ -125,7 +125,7 @@ struct PerCoreBars: View {
             HStack(alignment: .bottom, spacing: 3) {
                 ForEach(Array(values.enumerated()), id: \.offset) { index, value in
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(.tint)
+                        .fill(Geist.blue)
                         .frame(height: max(2, 28 * value / 100))
                         .frame(maxWidth: .infinity, maxHeight: 28, alignment: .bottom)
                         .background(RoundedRectangle(cornerRadius: 2).fill(.quaternary))
@@ -160,6 +160,8 @@ struct HistoryChart: View {
                 }
             }
         }
+        // Vercel charts: one blue series, a second one in gray.
+        .chartForegroundStyleScale(domain: series.map(\.name), range: [Geist.blue, Geist.gray900])
         .chartLegend(series.count > 1 ? .visible : .hidden)
         .chartXAxis(.hidden)
         .chartYAxis {

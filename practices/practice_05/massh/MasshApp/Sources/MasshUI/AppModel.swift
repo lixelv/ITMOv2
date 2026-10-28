@@ -45,7 +45,9 @@ public struct Dependencies: Sendable {
             store: FakeServerStore(servers: servers),
             monitor: FakeReachabilityMonitor(),
             observation: FakeObservationService(scenario: scenario, processCount: processCount),
-            agent: FakeAgentOperations()
+            agent: FakeAgentOperations(),
+            // Fake Servers do not exist; their terminal tabs open a local shell instead.
+            terminal: { server in TerminalCommand(title: server.name, executable: "/bin/zsh", arguments: ["-f"]) }
         )
     }
 }

@@ -100,9 +100,9 @@ extension Reachability {
 
     var tint: Color {
         switch self {
-        case .online: .green
-        case .offline: .red
-        case .unknown: .gray
+        case .online: Geist.green
+        case .offline: Geist.red
+        case .unknown: Geist.gray700
         }
     }
 
