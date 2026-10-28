@@ -156,7 +156,7 @@ private struct Session: Sendable {
                 try await Task.sleep(for: limit)
                 // receive() ignores task cancellation; cancelling the socket makes it return.
                 socket.cancel(with: .goingAway, reason: nil)
-                throw ObservationError.ssh("Agent молчит дольше \(limit.components.seconds) с")
+                throw ObservationError.ssh(String(localized: "The Agent has been silent for over \(limit.components.seconds) s", bundle: .module))
             }
             defer { group.cancelAll() }
             do {
@@ -172,7 +172,7 @@ private struct Session: Sendable {
     static func describe(_ error: any Error) -> String {
         if let e = error as? ObservationError { return e.localizedDescription }
         let ns = error as NSError
-        if ns.domain == NSPOSIXErrorDomain && ns.code == Int(ENOTCONN) { return "Соединение с Agent закрыто" }
+        if ns.domain == NSPOSIXErrorDomain && ns.code == Int(ENOTCONN) { return String(localized: "The connection to the Agent was closed", bundle: .module) }
         return ns.localizedDescription
     }
 }
@@ -235,13 +235,13 @@ final class SSHTunnel: AgentTunnel {
                 let message = String(decoding: stderr.fileHandleForReading.availableData, as: UTF8.self)
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 state.withLock { $0 = (nil, nil, nil) }
-                throw ObservationError.ssh(message.isEmpty ? "ssh завершился с кодом \(process.terminationStatus)" : message)
+                throw ObservationError.ssh(message.isEmpty ? String(localized: "ssh exited with code \(process.terminationStatus)", bundle: .module) : message)
             }
             if await TCPProbe.connect(host: "127.0.0.1", port: port, timeout: .milliseconds(200)) { return port }
             try await Task.sleep(for: .milliseconds(100))
         }
         await close()
-        throw ObservationError.ssh("Не удалось открыть туннель к \(server.name)")
+        throw ObservationError.ssh(String(localized: "Could not open a tunnel to \(server.name)", bundle: .module))
     }
 
     func agentListening() async -> Bool {

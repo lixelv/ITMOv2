@@ -6,7 +6,7 @@ struct ServerListView: View {
 
     var body: some View {
         List(selection: $model.selectedServerName) {
-            Section("Серверы") {
+            Section("Servers") {
                 ForEach(model.servers) { server in
                     ServerRow(server: server, status: model.status(of: server))
                         .tag(server.name)
@@ -25,11 +25,11 @@ struct ServerListView: View {
         .overlay {
             if model.servers.isEmpty {
                 ContentUnavailableView {
-                    Label("Нет серверов", systemImage: "server.rack")
+                    Label("No Servers", systemImage: "server.rack")
                 } description: {
-                    Text("Добавьте Server — он запишется в ~/.ssh/config.")
+                    Text("Add a Server — it is written to ~/.ssh/config.")
                 } actions: {
-                    Button("Добавить Server") { model.editor = .add }
+                    Button("Add Server") { model.editor = .add }
                 }
             }
         }
@@ -46,7 +46,7 @@ struct ServerRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(server.name)
                     .lineLimit(1)
-                Text(server.proxyJump.map { "\(server.address) через \($0)" } ?? server.address)
+                Text(server.proxyJump.map { String(localized: "\(server.address) via \($0)") } ?? server.address)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -56,8 +56,8 @@ struct ServerRow: View {
                 Image(systemName: "lock")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
-                    .help("Из Include-файла \(server.source.lastPathComponent): только для чтения")
-                    .accessibilityLabel("Только для чтения")
+                    .help("From Include file \(server.source.lastPathComponent): read-only")
+                    .accessibilityLabel("Read-only")
             }
         }
         .padding(.vertical, 2)
@@ -108,9 +108,9 @@ extension Reachability {
 
     var explanation: String {
         switch self {
-        case .online: "Online: SSH-порт принимает соединения"
-        case .offline: "Offline: SSH-порт не отвечает"
-        case .unknown: "Unknown: Server за Bastion, а соединения с Bastion нет"
+        case .online: String(localized: "Online: the SSH port accepts connections")
+        case .offline: String(localized: "Offline: the SSH port does not answer")
+        case .unknown: String(localized: "Unknown: the Server is behind a Bastion with no open connection")
         }
     }
 }
@@ -121,19 +121,19 @@ struct ServerActions: View {
     var server: Server
 
     var body: some View {
-        Button("Подключиться", systemImage: "terminal") { model.connect(server) }
-        Button("Показать сведения", systemImage: "sidebar.right") {
+        Button("Connect", systemImage: "terminal") { model.connect(server) }
+        Button("Show Details", systemImage: "sidebar.right") {
             model.selectedServerName = server.name
             model.isInspectorPresented = true
         }
         Divider()
-        Button(server.isReadOnly ? "Посмотреть…" : "Изменить…", systemImage: "pencil") { model.editor = .edit(server) }
-        Button("Удалить…", systemImage: "trash", role: .destructive) { model.confirmation = .deleteServer(server) }
+        Button(server.isReadOnly ? String(localized: "View…") : String(localized: "Edit…"), systemImage: "pencil") { model.editor = .edit(server) }
+        Button("Delete…", systemImage: "trash", role: .destructive) { model.confirmation = .deleteServer(server) }
             .disabled(server.isReadOnly)
         Divider()
-        Button("Установить Agent…", systemImage: "arrow.down.circle") { model.confirmation = .installAgent(server) }
-        Button("Обновить Agent…", systemImage: "arrow.triangle.2.circlepath") { model.confirmation = .updateAgent(server) }
-        Button("Удалить Agent…", systemImage: "xmark.bin", role: .destructive) { model.confirmation = .uninstallAgent(server) }
+        Button("Install Agent…", systemImage: "arrow.down.circle") { model.confirmation = .installAgent(server) }
+        Button("Update Agent…", systemImage: "arrow.triangle.2.circlepath") { model.confirmation = .updateAgent(server) }
+        Button("Remove Agent…", systemImage: "xmark.bin", role: .destructive) { model.confirmation = .uninstallAgent(server) }
     }
 }
 
@@ -142,7 +142,7 @@ struct ServerActions: View {
     NavigationSplitView {
         ServerListView(model: model).task { model.start() }
     } detail: {
-        Text("Рабочая область")
+        Text("Workspace")
     }
     .frame(width: 700, height: 420)
 }

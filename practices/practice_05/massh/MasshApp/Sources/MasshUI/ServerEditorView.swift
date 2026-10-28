@@ -31,20 +31,20 @@ struct ServerEditorView: View {
         VStack(spacing: 0) {
             Form {
                 Section {
-                    TextField("Имя", text: $name, prompt: Text("web-1"))
-                    TextField("HostName", text: $hostName, prompt: Text("203.0.113.10 или host.example.com"))
+                    TextField("Name", text: $name, prompt: Text("web-1"))
+                    TextField("HostName", text: $hostName, prompt: Text("203.0.113.10 or host.example.com"))
                     TextField("User", text: $user, prompt: Text(NSUserName()))
                     TextField("Port", text: $port, prompt: Text("22"))
                     if !portIsValid {
-                        Text("Порт — число от 1 до 65535").font(.caption).foregroundStyle(.red)
+                        Text("The port is a number from 1 to 65535").font(.caption).foregroundStyle(.red)
                     }
                     HStack {
                         TextField("IdentityFile", text: $identityFile, prompt: Text("~/.ssh/id_ed25519"))
-                        Button("Выбрать…") { pickingKey = true }
+                        Button("Choose…") { pickingKey = true }
                             .disabled(readOnly)
                     }
                     Picker("ProxyJump", selection: $proxyJump) {
-                        Text("Нет").tag("")
+                        Text("None").tag("")
                         ForEach(model.servers.filter { $0.name != server?.name }) { s in
                             Text(s.name).tag(s.name)
                         }
@@ -64,16 +64,16 @@ struct ServerEditorView: View {
             Divider()
             HStack {
                 if server != nil, !readOnly {
-                    Button("Удалить…", role: .destructive) {
+                    Button("Delete…", role: .destructive) {
                         dismiss()
                         if let server { model.confirmation = .deleteServer(server) }
                     }
                 }
                 Spacer()
-                Button(readOnly ? "Закрыть" : "Отмена", role: .cancel) { dismiss() }
+                Button(readOnly ? String(localized: "Close") : String(localized: "Cancel"), role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 if !readOnly {
-                    Button(server == nil ? "Добавить" : "Сохранить") { Task { await save() } }
+                    Button(server == nil ? String(localized: "Add") : String(localized: "Save")) { Task { await save() } }
                         .keyboardShortcut(.defaultAction)
                         .disabled(!canSave)
                 }
@@ -91,8 +91,8 @@ struct ServerEditorView: View {
 
     private var title: String {
         switch mode {
-        case .add: "Новый Server"
-        case .edit(let s): s.isReadOnly ? "\(s.name) — только чтение" : "Изменить \(s.name)"
+        case .add: String(localized: "New Server")
+        case .edit(let s): s.isReadOnly ? String(localized: "\(s.name) — Read-Only") : String(localized: "Edit \(s.name)")
         }
     }
 
@@ -100,13 +100,13 @@ struct ServerEditorView: View {
         if let error {
             Label(error, systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
-                .accessibilityLabel("Ошибка: \(error)")
+                .accessibilityLabel("Error: \(error)")
         } else if let server, server.isReadOnly {
-            Label("Описан в \(Self.tildePath(server.source.path)) через Include. massh не пишет в Include-файлы — правьте его вручную.",
+            Label("Defined in \(Self.tildePath(server.source.path)) through Include. massh does not write to Include files — edit it by hand.",
                   systemImage: "lock")
                 .foregroundStyle(.secondary)
         } else {
-            Text("Изменится только блок Host этого Server в ~/.ssh/config; остальные директивы, комментарии и порядок сохранятся. Перед записью делается бэкап config.massh.bak.")
+            Text("Only this Server’s Host block in ~/.ssh/config changes; other directives, comments and order stay as they are. A backup, config.massh.bak, is made before writing.")
                 .foregroundStyle(.secondary)
         }
     }

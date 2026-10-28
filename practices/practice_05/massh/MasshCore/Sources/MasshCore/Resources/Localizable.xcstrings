@@ -1,0 +1,146 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Could not open a tunnel to %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось открыть туннель к %@"
+          }
+        }
+      }
+    },
+    "Installing Agent": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установка Agent"
+          }
+        }
+      }
+    },
+    "Removing Agent": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удаление Agent"
+          }
+        }
+      }
+    },
+    "Server “%@” is already in ~/.ssh/config.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server «%@» уже есть в ~/.ssh/config."
+          }
+        }
+      }
+    },
+    "Server “%@” is defined in an Include file and cannot be edited in massh.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server «%@» описан в Include-файле и не редактируется в massh."
+          }
+        }
+      }
+    },
+    "Server “%@” was not found.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server «%@» не найден."
+          }
+        }
+      }
+    },
+    "The Agent does not support the %@ architecture: it needs amd64 or arm64.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent не поддерживает архитектуру %@: нужен amd64 или arm64."
+          }
+        }
+      }
+    },
+    "The Agent has been silent for over %lld s": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent молчит дольше %lld с"
+          }
+        }
+      }
+    },
+    "The Server has no systemd: the Agent only runs as a systemd service.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На Server нет systemd: Agent работает только как systemd-сервис."
+          }
+        }
+      }
+    },
+    "The connection to the Agent was closed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Соединение с Agent закрыто"
+          }
+        }
+      }
+    },
+    "The name “%@” is not valid: use one word without spaces, “*” or “?”.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя «%@» не подходит: нужно одно слово без пробелов, «*» и «?»."
+          }
+        }
+      }
+    },
+    "Updating Agent": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновление Agent"
+          }
+        }
+      }
+    },
+    "massh is missing the file %@.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В massh нет файла %@."
+          }
+        }
+      }
+    },
+    "ssh exited with code %d": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ssh завершился с кодом %d"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

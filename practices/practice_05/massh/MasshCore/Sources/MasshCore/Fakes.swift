@@ -144,15 +144,15 @@ public struct FakeObservationService: ObservationService {
 public struct FakeAgentOperations: AgentOperations {
     public init() {}
 
-    public func install(on server: Server) async throws -> TerminalCommand { script("Установка Agent", server) }
-    public func update(on server: Server) async throws -> TerminalCommand { script("Обновление Agent", server) }
-    public func uninstall(from server: Server) async throws -> TerminalCommand { script("Удаление Agent", server) }
+    public func install(on server: Server) async throws -> TerminalCommand { script(String(localized: "Installing Agent", bundle: .module), server) }
+    public func update(on server: Server) async throws -> TerminalCommand { script(String(localized: "Updating Agent", bundle: .module), server) }
+    public func uninstall(from server: Server) async throws -> TerminalCommand { script(String(localized: "Removing Agent", bundle: .module), server) }
 
     private func script(_ title: String, _ server: Server) -> TerminalCommand {
         TerminalCommand(
             title: "\(title) — \(server.name)",
             executable: "/bin/sh",
-            arguments: ["-c", "echo '\(title) на \(server.name) (фейк)'; sleep 1; echo готово"]
+            arguments: ["-c", "echo '\(title) on \(server.name) (fake)'; sleep 1; echo done"]
         )
     }
 }

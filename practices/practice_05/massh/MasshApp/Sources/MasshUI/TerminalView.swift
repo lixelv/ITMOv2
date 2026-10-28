@@ -15,11 +15,9 @@ struct TerminalSurface: NSViewRepresentable {
         let view = LocalProcessTerminalView(frame: .zero)
         view.processDelegate = context.coordinator
         view.font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-        // Follow the system light/dark appearance instead of a fixed terminal theme.
-        view.nativeBackgroundColor = .textBackgroundColor
-        view.nativeForegroundColor = .textColor
-        view.caretColor = .controlAccentColor
         view.optionAsMetaKey = true
+        Self.applyColors(to: view)
+        context.coordinator.colorScheme = context.environment.colorScheme
 
         var environment = ProcessInfo.processInfo.environment
         environment["TERM"] = "xterm-256color"
@@ -37,9 +35,23 @@ struct TerminalSurface: NSViewRepresentable {
 
     func updateNSView(_ view: LocalProcessTerminalView, context: Context) {
         context.coordinator.onExit = onExit
+        if context.coordinator.colorScheme != context.environment.colorScheme {
+            context.coordinator.colorScheme = context.environment.colorScheme
+            Self.applyColors(to: view)
+        }
         if isActive, view.window?.firstResponder !== view {
             DispatchQueue.main.async { view.window?.makeFirstResponder(view) }
         }
+    }
+
+    /// SwiftTerm resolves colors once, so the system colors are re-applied whenever light/dark changes.
+    private static func applyColors(to view: LocalProcessTerminalView) {
+        view.effectiveAppearance.performAsCurrentDrawingAppearance {
+            view.nativeBackgroundColor = NSColor.textBackgroundColor.usingColorSpace(.sRGB) ?? .textBackgroundColor
+            view.nativeForegroundColor = NSColor.textColor.usingColorSpace(.sRGB) ?? .textColor
+            view.caretColor = NSColor.controlAccentColor.usingColorSpace(.sRGB) ?? .controlAccentColor
+        }
+        view.needsDisplay = true
     }
 
     static func dismantleNSView(_ view: LocalProcessTerminalView, coordinator: Coordinator) {
@@ -50,6 +62,7 @@ struct TerminalSurface: NSViewRepresentable {
 
     final class Coordinator: NSObject, LocalProcessTerminalViewDelegate, @unchecked Sendable {
         var onExit: @MainActor (Int32?) -> Void
+        var colorScheme: ColorScheme?
 
         init(onExit: @escaping @MainActor (Int32?) -> Void) {
             self.onExit = onExit
@@ -60,7 +73,8 @@ struct TerminalSurface: NSViewRepresentable {
         func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
 
         func processTerminated(source: TerminalView, exitCode: Int32?) {
-            report(exitCode)
+            // SwiftTerm's fork path hands over the raw waitpid status; the exit code is its high byte.
+            report(exitCode.map { $0 > 255 ? ($0 >> 8) & 0xff : $0 })
         }
 
         private var reported = false

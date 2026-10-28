@@ -23,3 +23,13 @@ system colors and materials, Liquid Glass from the OS. No custom palette or type
   terminal and status fully usable.
 - *Consistency:* standard controls only; the toolbar and context menu expose the same actions.
 - *No flicker:* numbers use `monospacedDigit()` so 1 Hz updates do not shift layout.
+
+## Icon, languages, appearance
+
+- **Icon:** `Resources/AppIcon.icon`, made in Icon Composer (one glass panel with a `>_` prompt, Default/Dark/Mono
+  variants); `bundle.sh` compiles it with `actool` into `Assets.car` and `AppIcon.icns`.
+- **Languages:** English is the source language, Russian a translation (`Resources/Localizable.xcstrings` for the UI,
+  `MasshCore/Sources/MasshCore/Resources/Localizable.xcstrings` for MasshCore). massh shows Russian when the system's
+  first language is Russian and English otherwise. After changing UI text run `./sync-strings.sh` and translate the
+  new keys.
+- **Appearance:** system light/dark throughout, the terminal included. `MASSH_APPEARANCE=light|dark` pins one for checks.

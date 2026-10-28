@@ -8,12 +8,12 @@ struct WorkspaceView: View {
     var body: some View {
         if model.tabs.isEmpty {
             ContentUnavailableView {
-                Label("Нет открытых терминалов", systemImage: "terminal")
+                Label("No Open Terminals", systemImage: "terminal")
             } description: {
-                Text("Дважды щёлкните Server в списке или нажмите «Подключиться».")
+                Text("Double-click a Server in the list or press Connect.")
             } actions: {
                 if let server = model.selectedServer {
-                    Button("Подключиться к \(server.name)") { model.connect(server) }
+                    Button("Connect to \(server.name)") { model.connect(server) }
                         .buttonStyle(.glassProminent)
                 }
             }
@@ -77,19 +77,19 @@ private struct SessionEndedBar: View {
     private func content(compact: Bool) -> some View {
         HStack(spacing: 12) {
             Label {
-                Text(code.map { "Сессия завершена · код \($0)" } ?? "Сессия завершена")
+                Text(code.map { String(localized: "Session ended · code \(String($0))") } ?? String(localized: "Session ended"))
             } icon: {
                 Image(systemName: code == 0 ? "checkmark.circle" : "bolt.horizontal.circle")
             }
             .foregroundStyle(.secondary)
             .fixedSize()
             Spacer(minLength: 8)
-            Button("Переподключить", systemImage: "arrow.clockwise", action: restart)
+            Button("Reconnect", systemImage: "arrow.clockwise", action: restart)
                 .labelStyle(compact ? AnyLabelStyle(.iconOnly) : AnyLabelStyle(.titleAndIcon))
-                .help("Переподключить")
-            Button("Закрыть вкладку", systemImage: "xmark", action: close)
+                .help("Reconnect")
+            Button("Close Tab", systemImage: "xmark", action: close)
                 .labelStyle(compact ? AnyLabelStyle(.iconOnly) : AnyLabelStyle(.titleOnly))
-                .help("Закрыть вкладку")
+                .help("Close Tab")
         }
         .fixedSize(horizontal: !compact, vertical: false)
     }
@@ -152,8 +152,8 @@ private struct TabButton: View {
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
             .opacity(hovering || isActive ? 1 : 0)
-            .help("Закрыть вкладку")
-            .accessibilityLabel("Закрыть вкладку \(tab.command.title)")
+            .help("Close Tab")
+            .accessibilityLabel("Close tab \(tab.command.title)")
         }
         .font(.callout)
         .padding(.horizontal, 10)
@@ -166,7 +166,7 @@ private struct TabButton: View {
         .contentShape(RoundedRectangle(cornerRadius: 6))
         .onTapGesture(perform: select)
         .onHover { hovering = $0 }
-        .help(tab.state == .running ? tab.command.title : "\(tab.command.title) — сессия завершена")
+        .help(tab.state == .running ? tab.command.title : String(localized: "\(tab.command.title) — session ended"))
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
     }
@@ -175,7 +175,7 @@ private struct TabButton: View {
 #Preview("Tabs") {
     let model = AppModel(dependencies: .fake())
     model.open(TerminalTab(serverName: "web-1", command: TerminalCommand(title: "web-1", executable: "/bin/sh",
-                                                                          arguments: ["-c", "echo привет из massh; top -l 1 | head -12"])))
+                                                                          arguments: ["-c", "echo hello from massh; top -l 1 | head -12"])))
     model.open(TerminalTab(serverName: "db-1", command: TerminalCommand(title: "db-1", executable: "/bin/sh",
                                                                          arguments: ["-c", "echo done"])))
     return WorkspaceView(model: model).frame(width: 800, height: 420)

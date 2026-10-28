@@ -12,23 +12,23 @@ public struct ServerCommands: Commands {
     public var body: some Commands {
         CommandMenu("Server") {
             let server = model.selectedServer
-            Button("Подключиться") { model.connect() }
+            Button("Connect") { model.connect() }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
                 .disabled(server == nil)
-            Button("Добавить Server…") { model.editor = .add }
+            Button("Add Server…") { model.editor = .add }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
-            Button(server?.isReadOnly == true ? "Посмотреть…" : "Изменить…") {
+            Button(server?.isReadOnly == true ? String(localized: "View…") : String(localized: "Edit…")) {
                 if let server { model.editor = .edit(server) }
             }
             .disabled(server == nil)
-            Button("Удалить…") { if let server { model.confirmation = .deleteServer(server) } }
+            Button("Delete…") { if let server { model.confirmation = .deleteServer(server) } }
                 .disabled(server == nil || server?.isReadOnly == true)
             Divider()
-            Button("Установить Agent…") { if let server { model.confirmation = .installAgent(server) } }
+            Button("Install Agent…") { if let server { model.confirmation = .installAgent(server) } }
                 .disabled(server == nil)
-            Button("Обновить Agent…") { if let server { model.confirmation = .updateAgent(server) } }
+            Button("Update Agent…") { if let server { model.confirmation = .updateAgent(server) } }
                 .disabled(server == nil)
-            Button("Удалить Agent…") { if let server { model.confirmation = .uninstallAgent(server) } }
+            Button("Remove Agent…") { if let server { model.confirmation = .uninstallAgent(server) } }
                 .disabled(server == nil)
         }
     }

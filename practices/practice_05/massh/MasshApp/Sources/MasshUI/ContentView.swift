@@ -22,15 +22,15 @@ public struct ContentView: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
-                Button("Подключиться", systemImage: "terminal") { model.connect() }
-                    .help("Открыть терминал к выбранному Server")
+                Button("Connect", systemImage: "terminal") { model.connect() }
+                    .help("Open a terminal to the selected Server")
                     .disabled(model.selectedServer == nil)
-                Button("Добавить Server", systemImage: "plus") { model.editor = .add }
-                    .help("Добавить Server в ~/.ssh/config")
+                Button("Add Server", systemImage: "plus") { model.editor = .add }
+                    .help("Add a Server to ~/.ssh/config")
             }
             ToolbarItem(placement: .primaryAction) {
-                Button("Инспектор", systemImage: "sidebar.right") { model.isInspectorPresented.toggle() }
-                    .help(model.isInspectorPresented ? "Скрыть инспектор" : "Показать инспектор")
+                Button("Inspector", systemImage: "sidebar.right") { model.isInspectorPresented.toggle() }
+                    .help(model.isInspectorPresented ? String(localized: "Hide Inspector") : String(localized: "Show Inspector"))
                     .keyboardShortcut("0", modifiers: [.command, .option])
             }
         }
@@ -48,14 +48,14 @@ public struct ContentView: View {
             Button(text.action, role: text.isDestructive ? .destructive : nil) {
                 Task { await model.perform(pending) }
             }
-            Button("Отмена", role: .cancel) {
+            Button("Cancel", role: .cancel) {
                 if case .installAgent(let s) = pending { model.declinedAgentInstall.insert(s.name) }
             }
         } message: { pending in
             Text(ConfirmationText(pending).message)
         }
         .alert(
-            "Не получилось",
+            "Something went wrong",
             isPresented: Binding(get: { model.alertMessage != nil }, set: { if !$0 { model.alertMessage = nil } })
         ) {
             Button("OK") {}
@@ -75,24 +75,24 @@ struct ConfirmationText {
     init(_ pending: PendingConfirmation) {
         switch pending {
         case .deleteServer(let s):
-            title = "Удалить «\(s.name)»?"
-            message = "Блок Host будет удалён из \(s.source.lastPathComponent). Перед записью делается бэкап config.massh.bak."
-            action = "Удалить"
+            title = String(localized: "Delete “\(s.name)”?")
+            message = String(localized: "The Host block will be removed from \(s.source.lastPathComponent). A backup, config.massh.bak, is made before writing.")
+            action = String(localized: "Delete")
             isDestructive = true
         case .installAgent(let s):
-            title = "Установить Agent на \(s.name)?"
-            message = "massh загрузит Agent и откроет терминальную вкладку с установщиком. Пароль sudo вы вводите сами — massh его не видит. Agent работает как systemd-сервис от пользователя massh и слушает только localhost."
-            action = "Установить"
+            title = String(localized: "Install the Agent on \(s.name)?")
+            message = String(localized: "massh uploads the Agent and opens a terminal tab with the installer. You type the sudo password yourself — massh never sees it. The Agent runs as a systemd service under the massh user and listens on localhost only.")
+            action = String(localized: "Install")
             isDestructive = false
         case .updateAgent(let s):
-            title = "Обновить Agent на \(s.name)?"
-            message = "Установщик заменит бинарник и перезапустит сервис. Пароль sudo вводится в терминальной вкладке."
-            action = "Обновить"
+            title = String(localized: "Update the Agent on \(s.name)?")
+            message = String(localized: "The installer replaces the binary and restarts the service. You type the sudo password in the terminal tab.")
+            action = String(localized: "Update")
             isDestructive = false
         case .uninstallAgent(let s):
-            title = "Удалить Agent с \(s.name)?"
-            message = "Будут удалены сервис massh-agent, бинарник и пользователь massh. Пароль sudo вводится в терминальной вкладке."
-            action = "Удалить Agent"
+            title = String(localized: "Remove the Agent from \(s.name)?")
+            message = String(localized: "The massh-agent service, its binary and the massh user will be removed. You type the sudo password in the terminal tab.")
+            action = String(localized: "Remove Agent")
             isDestructive = true
         }
     }

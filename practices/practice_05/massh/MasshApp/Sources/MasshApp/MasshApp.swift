@@ -3,7 +3,30 @@ import MasshCore
 import MasshUI
 import SwiftUI
 
+/// Applies the language rule before any UI or string is loaded, then starts the app.
 @main
+enum Main {
+    static func main() {
+        AppLanguage.apply()
+        MasshApp.main()
+    }
+}
+
+/// massh speaks Russian when the system's first language is Russian and English otherwise,
+/// even if Russian appears further down the system's language list.
+enum AppLanguage {
+    static let supported = ["en", "ru"]
+
+    static func apply() {
+        let defaults = UserDefaults.standard
+        // Forget the choice from the previous launch so the system setting is read fresh.
+        defaults.removeObject(forKey: "AppleLanguages")
+        let system = (defaults.array(forKey: "AppleLanguages") as? [String])?.first ?? Locale.preferredLanguages.first ?? "en"
+        let language = Locale(identifier: system).language.languageCode?.identifier ?? "en"
+        defaults.set([supported.contains(language) ? language : "en"], forKey: "AppleLanguages")
+    }
+}
+
 struct MasshApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
     @State private var model = AppModel(dependencies: .live())
@@ -24,6 +47,15 @@ struct MasshApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Follows the system appearance; `MASSH_APPEARANCE=light|dark` pins one for screenshots and checks.
+        switch ProcessInfo.processInfo.environment["MASSH_APPEARANCE"] {
+        case "light": NSApp.appearance = NSAppearance(named: .aqua)
+        case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+        default: break
+        }
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         // Session tasks are not cancelled at quit; make sure no tunnel ssh outlives massh.
         SSHObservationService.terminateAllSessions()

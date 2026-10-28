@@ -11,60 +11,60 @@ struct OverviewView: View {
 
     var body: some View {
         Form {
-            Section("Система") {
-                LabeledContent("ОС", value: o.os)
-                LabeledContent("Ядро", value: o.kernel)
-                LabeledContent("Работает", value: Format.uptime(o.uptimeSeconds))
+            Section("System") {
+                LabeledContent("OS", value: o.os)
+                LabeledContent("Kernel", value: o.kernel)
+                LabeledContent("Uptime", value: Format.uptime(o.uptimeSeconds))
                 LabeledContent("Load average") {
                     Text(Format.load(o.loadAverage)).monospacedDigit()
                 }
             }
 
-            Section("Процессор") {
-                LabeledContent("Модель") { Text(o.cpu.model).lineLimit(2).multilineTextAlignment(.trailing) }
-                LabeledContent("Ядра", value: "\(o.cpu.cores)")
-                UsageGauge(title: "Загрузка", fraction: o.cpu.usagePercent / 100, value: Format.percent(o.cpu.usagePercent))
+            Section("Processor") {
+                LabeledContent("Model") { Text(o.cpu.model).lineLimit(2).multilineTextAlignment(.trailing) }
+                LabeledContent("Cores", value: "\(o.cpu.cores)")
+                UsageGauge(title: String(localized: "Usage"), fraction: o.cpu.usagePercent / 100, value: Format.percent(o.cpu.usagePercent))
                 if !o.cpu.perCorePercent.isEmpty {
                     PerCoreBars(values: o.cpu.perCorePercent)
                 }
                 HistoryChart(history: history, series: [.init(name: "CPU", value: \.cpuPercent)], percent: true)
             }
 
-            Section("Память") {
+            Section("Memory") {
                 UsageGauge(title: "RAM", usage: o.memory)
                 if let swap = o.swap {
                     if swap.totalBytes > 0 {
                         UsageGauge(title: "Swap", usage: swap)
                     } else {
-                        LabeledContent("Swap", value: "нет")
+                        LabeledContent("Swap", value: "none")
                     }
                 }
                 HistoryChart(history: history, series: [.init(name: "RAM", value: \.memoryPercent)], percent: true)
             }
 
-            Section("Диски") {
+            Section("Disks") {
                 if o.disks.isEmpty {
-                    Text("Нет данных о дисках").foregroundStyle(.secondary)
+                    Text("No disk data").foregroundStyle(.secondary)
                 }
                 ForEach(o.disks, id: \.mountPoint) { disk in
                     UsageGauge(title: disk.mountPoint, usage: disk.usage, warnsWhenFull: true)
                 }
             }
 
-            Section("Сеть") {
+            Section("Network") {
                 LabeledContent {
                     Text(Format.rate(Double(o.network.rxBytesPerSecond))).monospacedDigit()
                 } label: {
-                    Label("Входящая", systemImage: "arrow.down")
+                    Label("Incoming", systemImage: "arrow.down")
                 }
                 LabeledContent {
                     Text(Format.rate(Double(o.network.txBytesPerSecond))).monospacedDigit()
                 } label: {
-                    Label("Исходящая", systemImage: "arrow.up")
+                    Label("Outgoing", systemImage: "arrow.up")
                 }
                 HistoryChart(history: history, series: [
-                    .init(name: "Входящая", value: \.rxBytesPerSecond),
-                    .init(name: "Исходящая", value: \.txBytesPerSecond),
+                    .init(name: String(localized: "Incoming"), value: \.rxBytesPerSecond),
+                    .init(name: String(localized: "Outgoing"), value: \.txBytesPerSecond),
                 ], percent: false)
             }
         }
@@ -88,7 +88,7 @@ struct UsageGauge: View {
     init(title: String, usage: Snapshot.Usage, warnsWhenFull: Bool = false) {
         self.title = title
         fraction = usage.fraction
-        value = "\(Format.bytes(usage.usedBytes)) из \(Format.bytes(usage.totalBytes))"
+        value = String(localized: "\(Format.bytes(usage.usedBytes)) of \(Format.bytes(usage.totalBytes))")
         self.warnsWhenFull = warnsWhenFull
     }
 
@@ -121,7 +121,7 @@ struct PerCoreBars: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("По ядрам").font(.caption).foregroundStyle(.secondary)
+            Text("Per core").font(.caption).foregroundStyle(.secondary)
             HStack(alignment: .bottom, spacing: 3) {
                 ForEach(Array(values.enumerated()), id: \.offset) { index, value in
                     RoundedRectangle(cornerRadius: 2)
@@ -129,13 +129,13 @@ struct PerCoreBars: View {
                         .frame(height: max(2, 28 * value / 100))
                         .frame(maxWidth: .infinity, maxHeight: 28, alignment: .bottom)
                         .background(RoundedRectangle(cornerRadius: 2).fill(.quaternary))
-                        .help("Ядро \(index): \(Format.percent(value))")
+                        .help("Core \(index): \(Format.percent(value))")
                 }
             }
             .animation(.easeOut(duration: 0.3), value: values)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Загрузка по ядрам")
+        .accessibilityLabel("Per-core usage")
         .accessibilityValue(values.map(Format.percent).joined(separator: ", "))
     }
 }
@@ -154,8 +154,8 @@ struct HistoryChart: View {
         Chart {
             ForEach(series, id: \.name) { s in
                 ForEach(points) { sample in
-                    LineMark(x: .value("Время", sample.time), y: .value(s.name, sample[keyPath: s.value]))
-                        .foregroundStyle(by: .value("Ряд", s.name))
+                    LineMark(x: .value("Time", sample.time), y: .value(s.name, sample[keyPath: s.value]))
+                        .foregroundStyle(by: .value("Series", s.name))
                         .interpolationMethod(.monotone)
                 }
             }
@@ -174,7 +174,7 @@ struct HistoryChart: View {
         }
         .chartYScale(domain: percent ? 0...100 : 0...max(1, maxValue * 1.2))
         .frame(height: 56)
-        .accessibilityLabel("График: \(series.map(\.name).joined(separator: ", ")) с момента подключения")
+        .accessibilityLabel("Chart: \(series.map(\.name).joined(separator: ", ")) since connecting")
     }
 
     /// At most ~300 points are drawn however long the connection has been open.

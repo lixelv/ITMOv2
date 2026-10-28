@@ -6,7 +6,7 @@ enum Format {
     }
 
     static func rate(_ bytesPerSecond: Double) -> String {
-        Int64(bytesPerSecond).formatted(.byteCount(style: .decimal, spellsOutZero: false)) + "/с"
+        String(localized: "\(Int64(bytesPerSecond).formatted(.byteCount(style: .decimal, spellsOutZero: false)))/s", comment: "Rate, e.g. 12 kB/s")
     }
 
     static func percent(_ value: Double) -> String {
@@ -17,7 +17,7 @@ enum Format {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = seconds >= 86_400 ? [.day, .hour] : [.hour, .minute]
         formatter.unitsStyle = .abbreviated
-        return formatter.string(from: TimeInterval(seconds)) ?? "\(seconds) с"
+        return formatter.string(from: TimeInterval(seconds)) ?? String(localized: "\(seconds) s")
     }
 
     static func load(_ values: [Double]) -> String {

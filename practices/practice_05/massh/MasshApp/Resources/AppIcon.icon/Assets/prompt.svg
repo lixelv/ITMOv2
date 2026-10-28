@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Terminal prompt: chevron and cursor. -->
+  <path fill="#FFFFFF" d="M314 388c-16-16-16-42 0-58s42-16 58 0l152 152c16 16 16 42 0 58L372 692c-16 16-42 16-58 0s-16-42 0-58l123-123z"/>
+  <rect x="540" y="626" width="176" height="80" rx="40" fill="#FFFFFF"/>
+</svg>

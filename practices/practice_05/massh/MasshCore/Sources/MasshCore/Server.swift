@@ -55,10 +55,10 @@ public enum ServerStoreError: Error, Hashable, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .nameTaken(let name): "Server «\(name)» уже есть в ~/.ssh/config."
-        case .readOnly(let name): "Server «\(name)» описан в Include-файле и не редактируется в massh."
-        case .notFound(let name): "Server «\(name)» не найден."
-        case .invalidName(let name): "Имя «\(name)» не подходит: нужно одно слово без пробелов, «*» и «?»."
+        case .nameTaken(let name): String(localized: "Server “\(name)” is already in ~/.ssh/config.", bundle: .module)
+        case .readOnly(let name): String(localized: "Server “\(name)” is defined in an Include file and cannot be edited in massh.", bundle: .module)
+        case .notFound(let name): String(localized: "Server “\(name)” was not found.", bundle: .module)
+        case .invalidName(let name): String(localized: "The name “\(name)” is not valid: use one word without spaces, “*” or “?”.", bundle: .module)
         }
     }
 }

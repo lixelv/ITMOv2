@@ -21,12 +21,12 @@ struct PortsTable: View {
 
     var body: some View {
         Table(ports.map { PortRow(port: $0) }.sorted(using: sortOrder), selection: $selection, sortOrder: $sortOrder) {
-            TableColumn("Прот.", value: \.proto).width(min: 36, ideal: 40)
-            TableColumn("Адрес", value: \.address) { Text($0.address).monospaced() }
-            TableColumn("Порт", value: \.portNumber) { Text("\($0.portNumber)").monospacedDigit() }.width(min: 40, ideal: 50)
-            TableColumn("Владелец", value: \.ownerName) { row in OwnerLabel(owner: row.port.owner) }
+            TableColumn("Proto", value: \.proto).width(min: 36, ideal: 40)
+            TableColumn("Address", value: \.address) { Text($0.address).monospaced() }
+            TableColumn("Port", value: \.portNumber) { Text("\($0.portNumber)").monospacedDigit() }.width(min: 40, ideal: 50)
+            TableColumn("Owner", value: \.ownerName) { row in OwnerLabel(owner: row.port.owner) }
         }
-        .overlay { if ports.isEmpty { ContentUnavailableView("Нет слушающих портов", systemImage: "point.3.connected.trianglepath.dotted") } }
+        .overlay { if ports.isEmpty { ContentUnavailableView("No Listening Ports", systemImage: "point.3.connected.trianglepath.dotted") } }
     }
 }
 
@@ -42,7 +42,7 @@ struct OwnerLabel: View {
             Label { Text(name).lineLimit(1) } icon: { Image(systemName: "shippingbox") }
                 .help("Container \(name)")
         case nil:
-            Text("—").foregroundStyle(.tertiary).help("Владелец неизвестен: Agent не видит процесс")
+            Text("—").foregroundStyle(.tertiary).help("Owner unknown: the Agent cannot see the process")
         }
     }
 }
@@ -55,15 +55,15 @@ struct ProcessesTable: View {
     var body: some View {
         Table(processes.sorted(using: sortOrder), selection: $selection, sortOrder: $sortOrder) {
             TableColumn("PID", value: \.pid) { Text("\($0.pid)").monospacedDigit() }.width(min: 44, ideal: 52)
-            TableColumn("Имя", value: \.name) { Text($0.name).lineLimit(1) }
-            TableColumn("Польз.", value: \.user) { Text($0.user).lineLimit(1) }.width(min: 48, ideal: 64)
+            TableColumn("Name", value: \.name) { Text($0.name).lineLimit(1) }
+            TableColumn("Username", value: \.user) { Text($0.user).lineLimit(1) }.width(min: 48, ideal: 64)
             TableColumn("CPU", value: \.cpuPercent) { Text(Format.percent($0.cpuPercent)).monospacedDigit() }.width(min: 44, ideal: 50)
             TableColumn("RAM", value: \.memoryBytes) { Text(Format.bytes($0.memoryBytes)).monospacedDigit() }.width(min: 56, ideal: 64)
-            TableColumn("Команда", value: \.command) { p in
+            TableColumn("Command", value: \.command) { p in
                 Text(p.command).lineLimit(1).truncationMode(.middle).help(p.command).foregroundStyle(.secondary)
             }
         }
-        .overlay { if processes.isEmpty { ContentUnavailableView("Нет процессов", systemImage: "list.bullet.rectangle") } }
+        .overlay { if processes.isEmpty { ContentUnavailableView("No Processes", systemImage: "list.bullet.rectangle") } }
     }
 }
 
@@ -86,21 +86,21 @@ struct ContainersTable: View {
     var body: some View {
         switch docker {
         case .notInstalled:
-            ContentUnavailableView("Docker не установлен", systemImage: "shippingbox",
-                                   description: Text("На этом Server нет Docker, или Agent не может к нему обратиться."))
+            ContentUnavailableView("Docker Not Installed", systemImage: "shippingbox",
+                                   description: Text("This Server has no Docker, or the Agent cannot reach it."))
         case .available(let containers):
             Table(containers.map { ContainerRow(container: $0) }.sorted(using: sortOrder), selection: $selection, sortOrder: $sortOrder) {
-                TableColumn("Имя", value: \.name) { Text($0.name).lineLimit(1) }
-                TableColumn("Образ", value: \.image) { Text($0.image).lineLimit(1).foregroundStyle(.secondary) }
-                TableColumn("Статус", value: \.status) { Text($0.status).lineLimit(1) }
+                TableColumn("Name", value: \.name) { Text($0.name).lineLimit(1) }
+                TableColumn("Image", value: \.image) { Text($0.image).lineLimit(1).foregroundStyle(.secondary) }
+                TableColumn("Status", value: \.status) { Text($0.status).lineLimit(1) }
                 TableColumn("CPU", value: \.cpu) { Text(Format.percent($0.cpu)).monospacedDigit() }.width(min: 44, ideal: 50)
                 TableColumn("RAM", value: \.memory) { row in
                     Text(row.container.memoryLimitBytes.map { "\(Format.bytes(row.memory)) / \(Format.bytes($0))" } ?? Format.bytes(row.memory))
                         .monospacedDigit().lineLimit(1)
                 }
-                TableColumn("Порты", value: \.ports) { Text($0.ports).lineLimit(1).truncationMode(.middle).help($0.ports) }
+                TableColumn("Ports", value: \.ports) { Text($0.ports).lineLimit(1).truncationMode(.middle).help($0.ports) }
             }
-            .overlay { if containers.isEmpty { ContentUnavailableView("Нет запущенных контейнеров", systemImage: "shippingbox") } }
+            .overlay { if containers.isEmpty { ContentUnavailableView("No Running Containers", systemImage: "shippingbox") } }
         }
     }
 }

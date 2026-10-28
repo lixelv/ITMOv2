@@ -7,10 +7,10 @@ enum InspectorTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .overview: "Обзор"
-        case .ports: "Порты"
-        case .processes: "Процессы"
-        case .containers: "Контейнеры"
+        case .overview: String(localized: "Overview")
+        case .ports: String(localized: "Ports")
+        case .processes: String(localized: "Processes")
+        case .containers: String(localized: "Containers")
         }
     }
 
@@ -32,7 +32,7 @@ struct InspectorView: View {
         if let server = model.selectedServer {
             VStack(spacing: 0) {
                 // Icon selector like Xcode's inspector tabs.
-                Picker("Раздел", selection: $tab) {
+                Picker("Section", selection: $tab) {
                     ForEach(InspectorTab.allCases) { tab in
                         Label(tab.title, systemImage: tab.symbol).labelStyle(.iconOnly).help(tab.title).tag(tab)
                     }
@@ -46,8 +46,8 @@ struct InspectorView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
         } else {
-            ContentUnavailableView("Server не выбран", systemImage: "server.rack",
-                                   description: Text("Выберите Server в списке, чтобы увидеть сведения о нём."))
+            ContentUnavailableView("No Server Selected", systemImage: "server.rack",
+                                   description: Text("Select a Server in the list to see what is running on it."))
         }
     }
 }
@@ -86,19 +86,19 @@ struct InspectorContent: View {
         if let outdated = inspector.outdated {
             InspectorBanner(
                 symbol: "arrow.triangle.2.circlepath.circle.fill", tint: .orange,
-                title: "Обновить Agent",
-                detail: "На Server Agent \(outdated.installed), в massh — \(outdated.bundled)."
+                title: String(localized: "Update Agent"),
+                detail: String(localized: "The Server runs Agent \(outdated.installed); massh ships \(outdated.bundled).")
             ) {
-                Button("Обновить…") { model.confirmation = .updateAgent(server) }
+                Button("Update…") { model.confirmation = .updateAgent(server) }
             }
         }
         switch inspector.connection {
         case .lost(let reason):
-            InspectorBanner(symbol: "bolt.horizontal.circle.fill", tint: .red, title: "Соединение с Agent потеряно",
+            InspectorBanner(symbol: "bolt.horizontal.circle.fill", tint: .red, title: String(localized: "Connection to the Agent lost"),
                             detail: staleDetail(reason)) { ProgressView().controlSize(.small) }
         case .reconnecting(let attempt):
-            InspectorBanner(symbol: "arrow.clockwise.circle.fill", tint: .secondary, title: "Переподключение…",
-                            detail: staleDetail("попытка \(attempt)")) { ProgressView().controlSize(.small) }
+            InspectorBanner(symbol: "arrow.clockwise.circle.fill", tint: .secondary, title: String(localized: "Reconnecting…"),
+                            detail: staleDetail(String(localized: "attempt \(attempt)"))) { ProgressView().controlSize(.small) }
         default:
             EmptyView()
         }
@@ -106,7 +106,7 @@ struct InspectorContent: View {
 
     private func staleDetail(_ reason: String) -> String {
         guard let at = inspector.receivedAt else { return reason }
-        return "\(reason). Данные на \(at.formatted(date: .omitted, time: .standard))."
+        return String(localized: "\(reason). Data as of \(at.formatted(date: .omitted, time: .standard)).")
     }
 
     @ViewBuilder private var placeholder: some View {
@@ -114,14 +114,14 @@ struct InspectorContent: View {
         case .noAgent:
             NoAgentView(model: model, server: server)
         case .unsupportedFormat(let version):
-            ContentUnavailableView("Agent новее massh", systemImage: "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90",
-                                   description: Text("Agent на \(server.name) отдаёт формат \(version), а эта сборка massh его не понимает. Обновите massh."))
+            ContentUnavailableView("Agent Is Newer Than massh", systemImage: "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90",
+                                   description: Text("The Agent on \(server.name) sends format \(version), which this build of massh does not understand. Update massh."))
         case .lost(let reason):
-            ContentUnavailableView("Нет связи с Agent", systemImage: "bolt.horizontal.circle", description: Text(reason))
+            ContentUnavailableView("No Connection to the Agent", systemImage: "bolt.horizontal.circle", description: Text(reason))
         default:
             VStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text("Подключение к \(server.name)…").foregroundStyle(.secondary)
+                Text("Connecting to \(server.name)…").foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -136,18 +136,18 @@ struct NoAgentView: View {
     var body: some View {
         let declined = model.declinedAgentInstall.contains(server.name)
         ContentUnavailableView {
-            Label("На \(server.name) нет Agent", systemImage: "antenna.radiowaves.left.and.right.slash")
+            Label("No Agent on \(server.name)", systemImage: "antenna.radiowaves.left.and.right.slash")
         } description: {
-            Text(declined
-                 ? "Терминал и статус работают и без Agent. Сведения о системе, портах, процессах и контейнерах появятся после установки."
-                 : "Agent — небольшой сервис massh, который отдаёт сведения о Server через SSH-туннель. Без него работают терминал и статус.")
+            declined
+                ? Text("The terminal and status work without the Agent. System details, ports, processes and containers appear once it is installed.")
+                : Text("The Agent is a small massh service that reports on the Server through an SSH tunnel. The terminal and status work without it.")
         } actions: {
             if declined {
-                Button("Установить Agent…") { model.confirmation = .installAgent(server) }
+                Button("Install Agent…") { model.confirmation = .installAgent(server) }
             } else {
-                Button("Установить Agent…") { model.confirmation = .installAgent(server) }
+                Button("Install Agent…") { model.confirmation = .installAgent(server) }
                     .buttonStyle(.glassProminent)
-                Button("Не сейчас") { model.declinedAgentInstall.insert(server.name) }
+                Button("Not Now") { model.declinedAgentInstall.insert(server.name) }
             }
         }
     }

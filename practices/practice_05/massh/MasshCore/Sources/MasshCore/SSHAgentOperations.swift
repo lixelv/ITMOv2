@@ -8,9 +8,9 @@ public enum AgentOperationError: Error, LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .unsupportedArchitecture(let arch): "Agent не поддерживает архитектуру \(arch): нужен amd64 или arm64."
-        case .noSystemd: "На Server нет systemd: Agent работает только как systemd-сервис."
-        case .missingBinary(let name): "В massh нет файла \(name)."
+        case .unsupportedArchitecture(let arch): String(localized: "The Agent does not support the \(arch) architecture: it needs amd64 or arm64.", bundle: .module)
+        case .noSystemd: String(localized: "The Server has no systemd: the Agent only runs as a systemd service.", bundle: .module)
+        case .missingBinary(let name): String(localized: "massh is missing the file \(name).", bundle: .module)
         case .ssh(let message): message
         }
     }
@@ -31,15 +31,15 @@ public struct SSHAgentOperations: AgentOperations {
     }
 
     public func install(on server: Server) async throws -> TerminalCommand {
-        try await prepare(server, action: "install", title: "Установка Agent")
+        try await prepare(server, action: "install", title: String(localized: "Installing Agent", bundle: .module))
     }
 
     public func update(on server: Server) async throws -> TerminalCommand {
-        try await prepare(server, action: "update", title: "Обновление Agent")
+        try await prepare(server, action: "update", title: String(localized: "Updating Agent", bundle: .module))
     }
 
     public func uninstall(from server: Server) async throws -> TerminalCommand {
-        try await prepare(server, action: "uninstall", title: "Удаление Agent")
+        try await prepare(server, action: "uninstall", title: String(localized: "Removing Agent", bundle: .module))
     }
 
     private func prepare(_ server: Server, action: String, title: String) async throws -> TerminalCommand {
