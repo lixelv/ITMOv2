@@ -79,4 +79,3 @@ func describe(ports []snapshot.Port) string {
 	}
 	return s
 }
-

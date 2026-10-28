@@ -3,12 +3,14 @@ package collect
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"massh/agent/docker"
 	"massh/agent/snapshot"
 )
 
@@ -23,7 +25,10 @@ type Collector struct {
 	Statfs func(path string) (total, free uint64, err error)
 
 	SkipProcesses bool
-	SkipDocker    bool
+	// Docker lists running Containers; nil or failing means Docker is not installed or not reachable.
+	Docker interface {
+		Containers(ctx context.Context) ([]docker.Container, error)
+	}
 
 	prev *sample
 }
@@ -34,6 +39,8 @@ type sample struct {
 	cpu     []cpuTimes // index 0 is the aggregate line
 	rx, tx  uint64
 	procCPU map[int]uint64
+	// container id -> container and host CPU nanoseconds
+	containerCPU map[string][2]uint64
 }
 
 func (c *Collector) Reset() { c.prev = nil }
@@ -59,6 +66,7 @@ func (c *Collector) Collect() snapshot.Snapshot {
 		}
 		s.Ports = c.ports(procs)
 	}
+	c.containers(cur, &s)
 	c.prev = cur
 	return s
 }

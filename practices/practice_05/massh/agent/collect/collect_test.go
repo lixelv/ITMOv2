@@ -51,7 +51,6 @@ func newCollector(root string, c *clock) *collect.Collector {
 			return 0, 0, os.ErrNotExist
 		},
 		SkipProcesses: true,
-		SkipDocker:    true,
 	}
 }
 
@@ -137,7 +136,7 @@ vethab12: 9555555    5000    0    0    0     0          0         0  9555555    
 }
 
 func TestMissingFilesDoNotPanic(t *testing.T) {
-	s := (&collect.Collector{Root: t.TempDir(), SkipDocker: true}).Collect()
+	s := (&collect.Collector{Root: t.TempDir()}).Collect()
 	if _, err := s.Encode(); err != nil {
 		t.Fatal(err)
 	}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"massh/agent/collect"
+	"massh/agent/docker"
 	"massh/agent/stream"
 )
 
@@ -30,7 +31,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	collector := &collect.Collector{Root: "/", Version: version, Statfs: collect.Statfs}
+	collector := &collect.Collector{Root: "/", Version: version, Statfs: collect.Statfs, Docker: docker.New("/var/run/docker.sock")}
 	hub := stream.NewHub(collector, time.Second)
 	ln, err := net.Listen("tcp", *listen)
 	if err != nil {

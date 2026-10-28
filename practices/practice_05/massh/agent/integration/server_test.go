@@ -47,6 +47,8 @@ func startServer(t *testing.T, image, binDir string) *testServer {
 	name := fmt.Sprintf("massh-it-%d", time.Now().UnixNano())
 	args := []string{"run", "-d", "--rm", "--name", name, "--privileged", "--cgroupns=host",
 		"-v", "/sys/fs/cgroup:/sys/fs/cgroup:rw", "--tmpfs", "/run", "--tmpfs", "/run/lock"}
+	// Nested Docker cannot put overlayfs on the container's own overlay root; give it real volumes.
+	args = append(args, "-v", "/var/lib/docker", "-v", "/var/lib/containerd")
 	if binDir != "" {
 		args = append(args, "-v", binDir+":/opt/massh-test:ro")
 	}
@@ -55,7 +57,7 @@ func startServer(t *testing.T, image, binDir string) *testServer {
 		t.Fatalf("docker run: %v\n%s", err, out)
 	}
 	s := &testServer{t: t, name: name}
-	t.Cleanup(func() { exec.Command("docker", "rm", "-f", name).Run() })
+	t.Cleanup(func() { exec.Command("docker", "rm", "-f", "-v", name).Run() })
 	s.waitFor("systemctl is-system-running --wait >/dev/null 2>&1; systemctl is-active ssh", 60*time.Second)
 	return s
 }
