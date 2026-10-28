@@ -12,6 +12,7 @@ struct MasshApp: App {
             ContentView(model: model)
                 .frame(minWidth: 900, minHeight: 520)
         }
+        .defaultSize(width: 1280, height: 780)
         .windowToolbarStyle(.unified)
         .commands {
             SidebarCommands()
