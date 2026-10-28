@@ -5,6 +5,7 @@ import SwiftUI
 
 @main
 struct MasshApp: App {
+    @NSApplicationDelegateAdaptor private var delegate: AppDelegate
     @State private var model = AppModel(dependencies: .live())
 
     var body: some Scene {
@@ -20,6 +21,15 @@ struct MasshApp: App {
             ServerCommands(model: model)
         }
     }
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillTerminate(_ notification: Notification) {
+        // Session tasks are not cancelled at quit; make sure no tunnel ssh outlives massh.
+        SSHObservationService.terminateAllSessions()
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
 extension Dependencies {

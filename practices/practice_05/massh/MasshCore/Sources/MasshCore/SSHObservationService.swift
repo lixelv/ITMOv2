@@ -23,6 +23,9 @@ public enum ObservationError: Error, LocalizedError {
 
 /// Observation session over the system `ssh`: ControlMaster + `-L` tunnel to the Agent, WebSocket on top (ADR 0005).
 public struct SSHObservationService: ObservationService {
+    /// Stops every tunnel `ssh` started by observation sessions. Call when the app terminates.
+    public static func terminateAllSessions() { SSHTunnel.terminateAll() }
+
     struct Timing: Sendable {
         /// Silence after which the connection is considered lost.
         var staleAfter: Duration = .seconds(5)
@@ -179,6 +182,17 @@ private struct Session: Sendable {
 final class SSHTunnel: AgentTunnel {
     static let agentPort = 12092
 
+    /// Every running tunnel process, so they can be stopped when the app quits (no task cancellation runs then).
+    private static let running = Mutex<[ObjectIdentifier: Process]>([:])
+
+    static func terminateAll() {
+        let processes = running.withLock { r in
+            defer { r = [:] }
+            return Array(r.values)
+        }
+        for p in processes where p.isRunning { p.terminate() }
+    }
+
     let server: Server
     let ssh: SSHCommand
     private let state = Mutex<(process: Process?, port: Int?, stderr: Pipe?)>((nil, nil, nil))
@@ -211,6 +225,7 @@ final class SSHTunnel: AgentTunnel {
         process.standardError = stderr
         try process.run()
         state.withLock { $0 = (process, port, stderr) }
+        Self.running.withLock { $0[ObjectIdentifier(process)] = process }
 
         // Up when the local end accepts connections; dead if ssh exits first.
         let deadline = ContinuousClock.now + .seconds(15)
@@ -245,6 +260,7 @@ final class SSHTunnel: AgentTunnel {
             return (s.process, s.port)
         }
         guard let process else { return }
+        _ = Self.running.withLock { $0.removeValue(forKey: ObjectIdentifier(process)) }
         if let port {
             // If another master served the forward, it would outlive our client; cancel it explicitly.
             _ = try? await Subprocess.run(ssh.executable, ssh.multiplexed() + ["-O", "cancel", "-L", forwardSpec(port), server.name],
