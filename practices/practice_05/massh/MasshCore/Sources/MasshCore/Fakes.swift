@@ -144,9 +144,28 @@ public struct FakeObservationService: ObservationService {
 public struct FakeAgentOperations: AgentOperations {
     public init() {}
 
-    public func install(on server: Server) async throws -> TerminalCommand { script(String(localized: "Installing Agent", bundle: .module), server) }
-    public func update(on server: Server) async throws -> TerminalCommand { script(String(localized: "Updating Agent", bundle: .module), server) }
-    public func uninstall(from server: Server) async throws -> TerminalCommand { script(String(localized: "Removing Agent", bundle: .module), server) }
+    public func install(on server: Server, progress: @escaping @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
+        await steps(progress)
+        return script(String(localized: "Installing Agent", bundle: .module), server)
+    }
+
+    public func update(on server: Server, progress: @escaping @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
+        await steps(progress)
+        return script(String(localized: "Updating Agent", bundle: .module), server)
+    }
+
+    public func uninstall(from server: Server, progress: @escaping @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
+        await steps(progress)
+        return script(String(localized: "Removing Agent", bundle: .module), server)
+    }
+
+    /// Long enough to see each step in previews and in the app on fakes.
+    private func steps(_ progress: @Sendable (AgentStep) -> Void) async {
+        progress(.checking)
+        try? await Task.sleep(for: .milliseconds(800))
+        progress(.uploading)
+        try? await Task.sleep(for: .milliseconds(1200))
+    }
 
     private func script(_ title: String, _ server: Server) -> TerminalCommand {
         TerminalCommand(

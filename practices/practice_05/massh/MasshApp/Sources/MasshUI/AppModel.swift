@@ -10,16 +10,20 @@ public struct Dependencies: Sendable {
     public var agent: any AgentOperations
     /// Command for a plain terminal tab to a Server.
     public var terminal: @Sendable (Server) -> TerminalCommand
+    /// Opens the terminal connection to a selected Server ahead of Connect.
+    public var warmUp: @Sendable (Server) async -> Void
 
     public init(
         store: any ServerStore, monitor: any ReachabilityMonitor, observation: any ObservationService,
-        agent: any AgentOperations, terminal: @escaping @Sendable (Server) -> TerminalCommand = { .ssh($0) }
+        agent: any AgentOperations, terminal: @escaping @Sendable (Server) -> TerminalCommand = { .ssh($0) },
+        warmUp: @escaping @Sendable (Server) async -> Void = { _ in }
     ) {
         self.store = store
         self.monitor = monitor
         self.observation = observation
         self.agent = agent
         self.terminal = terminal
+        self.warmUp = warmUp
     }
 
     /// The real thing: `~/.ssh/config`, the system `ssh`, and the Agent binaries bundled in `agentBinaries`.
@@ -32,7 +36,8 @@ public struct Dependencies: Sendable {
             monitor: SSHReachabilityMonitor(ssh: ssh),
             observation: SSHObservationService(ssh: ssh),
             agent: SSHAgentOperations(ssh: ssh, binaries: agentBinaries),
-            terminal: { .ssh($0, using: ssh) }
+            terminal: { .ssh($0, using: ssh) },
+            warmUp: { await ssh.warmUp($0) }
         )
     }
 
@@ -98,6 +103,15 @@ public enum EditorMode: Identifiable, Hashable {
     }
 }
 
+/// An Agent operation as the Server List shows it, from the confirmation until its terminal tab ends.
+public enum AgentActivity: Hashable, Sendable {
+    case checking
+    case uploading
+    /// The installer tab is open; the user types the sudo password there.
+    case waitingForSudo
+    case failed(String)
+}
+
 /// What the window shows to the right of the Server List (ADR 0007).
 public enum WindowMode: Hashable, CaseIterable, Sendable {
     case terminal, inspector
@@ -111,7 +125,11 @@ public final class AppModel {
     public private(set) var servers: [Server] = []
     public private(set) var statuses: [String: Reachability] = [:]
     public var selectedServerName: String? {
-        didSet { if oldValue != selectedServerName { inspector.observe(selectedServer) } }
+        didSet {
+            guard oldValue != selectedServerName else { return }
+            inspector.observe(selectedServer)
+            if let server = selectedServer { Task { [warmUp = dependencies.warmUp] in await warmUp(server) } }
+        }
     }
     public var tabs: [TerminalTab] = []
     public var activeTabID: TerminalTab.ID? {
@@ -123,8 +141,10 @@ public final class AppModel {
     public var windowMode: WindowMode = .terminal
     public var editor: EditorMode?
     public var confirmation: PendingConfirmation?
-    /// Problems from Agent operations, shown as an alert.
+    /// Problems deleting a Server, shown as an alert. Agent operation errors stay on the Server's row instead.
     public var alertMessage: String?
+    /// Agent operations in progress or failed, by Server name.
+    public var agentActivity: [String: AgentActivity] = [:]
     /// Servers whose "install Agent" offer the user declined in this run.
     public var declinedAgentInstall: Set<String> = []
 
@@ -186,6 +206,7 @@ public final class AppModel {
 
     public func close(_ tabID: TerminalTab.ID) {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        if tabs[index].isAgentOperation { agentActivity[tabs[index].serverName] = nil }
         tabs.remove(at: index)
         if activeTabID == tabID { activeTabID = tabs.indices.contains(index) ? tabs[index].id : tabs.last?.id }
     }
@@ -194,6 +215,7 @@ public final class AppModel {
         guard let index = tabs.firstIndex(where: { $0.id == tabID }) else { return }
         tabs[index].state = .exited(code: code)
         let tab = tabs[index]
+        if tab.isAgentOperation { agentActivity[tab.serverName] = nil }
         if tab.isAgentOperation, code == 0, tab.serverName == inspector.server?.name {
             inspector.reconnect()
         }
@@ -226,29 +248,38 @@ public final class AppModel {
     // MARK: Agent
 
     /// Runs a confirmed Agent operation: MasshCore prepares the Server, the installer runs in a new terminal tab.
+    /// Each step shows on the Server's row; a failure stays there until the next attempt.
     public func perform(_ confirmation: PendingConfirmation) async {
-        do {
-            let command: TerminalCommand
-            let server: Server
-            switch confirmation {
-            case .deleteServer(let s):
-                await delete(s)
-                return
-            case .installAgent(let s):
-                server = s
-                command = try await dependencies.agent.install(on: s)
-            case .updateAgent(let s):
-                server = s
-                command = try await dependencies.agent.update(on: s)
-            case .uninstallAgent(let s):
-                server = s
-                command = try await dependencies.agent.uninstall(from: s)
+        let server: Server
+        switch confirmation {
+        case .deleteServer(let s):
+            await delete(s)
+            return
+        case .installAgent(let s), .updateAgent(let s), .uninstallAgent(let s):
+            server = s
+        }
+        let name = server.name
+        agentActivity[name] = .checking
+        let progress: @Sendable (AgentStep) -> Void = { step in
+            Task { @MainActor [weak self] in
+                // A late step must not overwrite the result.
+                guard let self, self.agentActivity[name] == .checking || self.agentActivity[name] == .uploading else { return }
+                self.agentActivity[name] = step == .checking ? .checking : .uploading
             }
-            var tab = TerminalTab(serverName: server.name, command: command)
+        }
+        do {
+            let command: TerminalCommand = switch confirmation {
+            case .installAgent: try await dependencies.agent.install(on: server, progress: progress)
+            case .updateAgent: try await dependencies.agent.update(on: server, progress: progress)
+            case .uninstallAgent: try await dependencies.agent.uninstall(from: server, progress: progress)
+            case .deleteServer: fatalError("handled above")
+            }
+            agentActivity[name] = .waitingForSudo
+            var tab = TerminalTab(serverName: name, command: command)
             tab.isAgentOperation = true
             open(tab)
         } catch {
-            alertMessage = error.localizedDescription
+            agentActivity[name] = .failed(error.localizedDescription)
         }
     }
 }

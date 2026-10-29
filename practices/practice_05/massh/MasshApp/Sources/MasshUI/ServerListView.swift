@@ -8,7 +8,7 @@ struct ServerListView: View {
         List(selection: $model.selectedServerName) {
             Section("Servers") {
                 ForEach(model.servers) { server in
-                    ServerRow(server: server, status: model.status(of: server))
+                    ServerRow(server: server, status: model.status(of: server), activity: model.agentActivity[server.name])
                         .tag(server.name)
                 }
             }
@@ -39,6 +39,7 @@ struct ServerListView: View {
 struct ServerRow: View {
     var server: Server
     var status: Reachability
+    var activity: AgentActivity?
 
     var body: some View {
         HStack(spacing: 8) {
@@ -46,10 +47,14 @@ struct ServerRow: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(server.name)
                     .lineLimit(1)
-                Text(server.proxyJump.map { String(localized: "\(server.address) via \($0)") } ?? server.address)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                if let activity {
+                    AgentActivityLine(activity: activity)
+                } else {
+                    Text(server.proxyJump.map { String(localized: "\(server.address) via \($0)") } ?? server.address)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             Spacer(minLength: 0)
             if server.isReadOnly {
@@ -63,6 +68,43 @@ struct ServerRow: View {
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
         .accessibilityValue(status.title)
+    }
+}
+
+/// The step of an Agent operation in place of the address: spinner while massh works, an error when it failed.
+struct AgentActivityLine: View {
+    var activity: AgentActivity
+
+    var body: some View {
+        HStack(spacing: Space.xs) {
+            switch activity {
+            case .failed:
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Geist.red)
+            case .waitingForSudo:
+                Image(systemName: "key.fill").foregroundStyle(Geist.amber)
+            case .checking, .uploading:
+                ProgressView().controlSize(.mini)
+            }
+            Text(text).lineLimit(1)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .help(help)
+        .transition(.opacity)
+    }
+
+    private var text: String {
+        switch activity {
+        case .checking: String(localized: "Checking the Server…")
+        case .uploading: String(localized: "Uploading the Agent…")
+        case .waitingForSudo: String(localized: "Waiting for sudo…")
+        case .failed(let message): message
+        }
+    }
+
+    private var help: String {
+        if case .failed(let message) = activity { return message }
+        return text
     }
 }
 

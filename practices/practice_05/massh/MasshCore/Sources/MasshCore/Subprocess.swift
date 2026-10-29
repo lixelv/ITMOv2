@@ -87,6 +87,13 @@ public struct SSHCommand: Sendable, Hashable {
     /// massh's ControlPath; `%C` is a hash of the connection, so one socket per Server.
     public var controlPath: String { controlDirectory.path + "/%C" }
 
+    /// ControlPath of the master terminal tabs share. Separate from `controlPath`: the Inspector's tunnel closes
+    /// its master when another Server is selected, which would cut every session riding on it.
+    public var tabControlPath: String { controlDirectory.path + "/t%C" }
+
+    /// Seconds a tab master stays after its last tab closes, so the next tab or a reconnect skips the handshake.
+    static let tabPersist = 60
+
     var baseArguments: [String] {
         configFile.map { ["-F", $0.path] } ?? []
     }
@@ -109,6 +116,31 @@ public struct SSHCommand: Sendable, Hashable {
             if parts.count == 2, values[String(parts[0])] == nil { values[String(parts[0])] = String(parts[1]) }
         }
         return values
+    }
+
+    /// Opens the tab master to `server` in the background, so the next terminal tab starts without a handshake.
+    /// Non-interactive: when the Server needs a password or a passphrase, it does nothing and the tab connects itself.
+    public func warmUp(_ server: Server) async {
+        try? FileManager.default.createDirectory(at: controlDirectory, withIntermediateDirectories: true,
+                                                 attributes: [.posixPermissions: 0o700])
+        if await hasMaster(server.name, controlPath: tabControlPath) { return }
+        _ = try? await Subprocess.run(executable, baseArguments + [
+            "-o", "ControlPath=\(tabControlPath)", "-o", "ControlMaster=auto", "-o", "ControlPersist=\(Self.tabPersist)",
+            "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-N", "-f", server.name,
+        ], timeout: .seconds(15))
+    }
+
+    /// Closes the tab master to `server` now instead of after `tabPersist`.
+    public func closeTabMaster(_ server: Server) async {
+        _ = try? await Subprocess.run(executable, baseArguments + ["-o", "ControlPath=\(tabControlPath)", "-O", "exit", server.name],
+                                      timeout: .seconds(3))
+    }
+
+    /// Whether a master to `name` answers at `controlPath`.
+    public func hasMaster(_ name: String, controlPath: String) async -> Bool {
+        let r = try? await Subprocess.run(executable, baseArguments + ["-o", "ControlPath=\(controlPath)", "-O", "check", name],
+                                          timeout: .seconds(3))
+        return r?.status == 0
     }
 
     /// Whether a ControlMaster connection to `name` is alive, at massh's ControlPath or the user's own.

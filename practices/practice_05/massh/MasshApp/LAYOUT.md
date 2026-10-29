@@ -10,7 +10,7 @@ keep running.
 | Zone | Components | Notes |
 |------|------------|-------|
 | Toolbar | Connect (`terminal`), Add Server (`plus`), `Terminal \| Inspector` segmented mode picker (principal) | Glass toolbar from the system. ⌘1/⌘2 in the View menu. Connect, double click and Agent actions switch to Terminal; selecting a Server keeps the mode |
-| Sidebar | `List(selection:)`, one row per Server: status symbol, name, `HostName` secondary | Status uses shape *and* color (`checkmark.circle.fill` / `xmark.circle.fill` / `questionmark.circle`) plus an accessibility value, never color alone. `Include` Servers carry a `lock` badge and their file in the tooltip. Context menu holds every Server action. Width ideal 220 (*provisional*) |
+| Sidebar | `List(selection:)`, one row per Server: status symbol, name, `HostName` secondary | Status uses shape *and* color (`checkmark.circle.fill` / `xmark.circle.fill` / `questionmark.circle`) plus an accessibility value, never color alone. `Include` Servers carry a `lock` badge and their file in the tooltip. Context menu holds every Server action. Width ideal 220 (*provisional*). While an Agent operation runs, the address line shows its step (checking, uploading, waiting for sudo) or its error |
 | Terminal | Tab strip (one tab per terminal, close buttons) over a SwiftTerm view | Empty state: `ContentUnavailableView` with Connect. Ended session: bar at the bottom of the tab with exit code and Reconnect |
 | Inspector | One scrolling page (ADR 0007): Overview tiles, Container cards, Process rows with search and order, Ports grouped by owner; state banners above | Sections collapse and pin their headers. Components and tokens in DESIGN.md. History charts are off by default |
 | Sheets | Server editor (`Form`, six fields), confirmation dialogs for delete and Agent install/update/remove | Errors from the store shown inline in the form footer |
@@ -37,6 +37,9 @@ keep running.
   Geist blue as the app's AccentColor (asset catalog, so standard controls pick it up), Geist green/red/gray for
   Online/Offline/Unknown, blue/amber/red gauges, blue and gray charts, and a black-or-white Geist terminal with a
   Geist ANSI palette. Sidebar, inspector and toolbar keep the system materials (ADR 0003).
+- **Connect latency:** terminal tabs share their own SSH master per Server (`ControlPersist` 60 s), opened in the
+  background when a Server is selected, so Connect skips the handshake (4.5 s → 1.3 s at 400 ms RTT). It is separate
+  from the Inspector's tunnel, which closes when another Server is selected.
 - **Terminal latency:** SwiftTerm is vendored with a redraw patch (`Vendor/SwiftTerm/PATCHES.md`), and inspector
   updates wait for a pause in typing (`TypingActivity`). Measured echo-to-screen latency with the inspector
   streaming: median ≈2 ms, worst ≈13 ms (was ≈21 ms and up to 130 ms).

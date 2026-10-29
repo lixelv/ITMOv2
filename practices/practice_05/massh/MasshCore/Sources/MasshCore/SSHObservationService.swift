@@ -178,7 +178,9 @@ private struct Session: Sendable {
 }
 
 /// `ssh -N -L` to the Server, as a ControlMaster when none exists yet. The tunnel process is a child of massh
-/// and is terminated on close, together with the forward it requested.
+/// and is terminated on close, together with the forward it requested. When a master already exists (the user's
+/// own, or one left by a massh that crashed), ssh hands the forward to it and exits 0; the forward then lives in
+/// that master and is cancelled through it on close.
 final class SSHTunnel: AgentTunnel {
     static let agentPort = 12092
 
@@ -203,8 +205,13 @@ final class SSHTunnel: AgentTunnel {
     }
 
     func open() async throws -> Int {
-        if let (process, port) = state.withLock({ s in s.process.flatMap { p in s.port.map { (p, $0) } } }), process.isRunning {
-            return port
+        let (current, currentPort) = state.withLock { ($0.process, $0.port) }
+        if let currentPort {
+            if let current, current.isRunning { return currentPort }
+            if current == nil, await TCPProbe.connect(host: "127.0.0.1", port: currentPort, timeout: .milliseconds(200)) {
+                return currentPort // forward held by another master
+            }
+            await close()
         }
         try FileManager.default.createDirectory(at: ssh.controlDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
@@ -231,6 +238,14 @@ final class SSHTunnel: AgentTunnel {
         let deadline = ContinuousClock.now + .seconds(15)
         while ContinuousClock.now < deadline {
             try Task.checkCancellation()
+            if !process.isRunning, process.terminationStatus == 0 {
+                // Forward handed to an existing master: ours if the local end answers.
+                _ = Self.running.withLock { $0.removeValue(forKey: ObjectIdentifier(process)) }
+                state.withLock { $0 = (nil, port, nil) }
+                if await TCPProbe.connect(host: "127.0.0.1", port: port, timeout: .milliseconds(500)) { return port }
+                await close()
+                throw ObservationError.ssh(String(localized: "Could not open a tunnel to \(server.name)", bundle: .module))
+            }
             if !process.isRunning {
                 let message = String(decoding: stderr.fileHandleForReading.availableData, as: UTF8.self)
                     .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -259,14 +274,13 @@ final class SSHTunnel: AgentTunnel {
             defer { s = (nil, nil, nil) }
             return (s.process, s.port)
         }
-        guard let process else { return }
-        _ = Self.running.withLock { $0.removeValue(forKey: ObjectIdentifier(process)) }
+        if let process { _ = Self.running.withLock { $0.removeValue(forKey: ObjectIdentifier(process)) } }
         if let port {
             // If another master served the forward, it would outlive our client; cancel it explicitly.
             _ = try? await Subprocess.run(ssh.executable, ssh.multiplexed() + ["-O", "cancel", "-L", forwardSpec(port), server.name],
                                           timeout: .seconds(3))
         }
-        if process.isRunning {
+        if let process, process.isRunning {
             process.terminate()
             for _ in 0..<30 where process.isRunning { try? await Task.sleep(for: .milliseconds(50)) }
             if process.isRunning { kill(process.processIdentifier, SIGKILL) }

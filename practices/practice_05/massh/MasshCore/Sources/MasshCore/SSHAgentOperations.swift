@@ -30,25 +30,28 @@ public struct SSHAgentOperations: AgentOperations {
         self.binaries = binaries
     }
 
-    public func install(on server: Server) async throws -> TerminalCommand {
-        try await prepare(server, action: "install", title: String(localized: "Installing Agent", bundle: .module))
+    public func install(on server: Server, progress: @escaping @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
+        try await prepare(server, action: "install", title: String(localized: "Installing Agent", bundle: .module), progress: progress)
     }
 
-    public func update(on server: Server) async throws -> TerminalCommand {
-        try await prepare(server, action: "update", title: String(localized: "Updating Agent", bundle: .module))
+    public func update(on server: Server, progress: @escaping @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
+        try await prepare(server, action: "update", title: String(localized: "Updating Agent", bundle: .module), progress: progress)
     }
 
-    public func uninstall(from server: Server) async throws -> TerminalCommand {
-        try await prepare(server, action: "uninstall", title: String(localized: "Removing Agent", bundle: .module))
+    public func uninstall(from server: Server, progress: @escaping @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
+        try await prepare(server, action: "uninstall", title: String(localized: "Removing Agent", bundle: .module), progress: progress)
     }
 
-    private func prepare(_ server: Server, action: String, title: String) async throws -> TerminalCommand {
+    private func prepare(_ server: Server, action: String, title: String,
+                         progress: @Sendable (AgentStep) -> Void) async throws -> TerminalCommand {
         try FileManager.default.createDirectory(at: ssh.controlDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
+        progress(.checking)
         let probe = try await remote(server, "uname -m; if [ -d /run/systemd/system ]; then echo systemd; fi")
         let lines = probe.split(separator: "\n").map(String.init)
         guard lines.contains("systemd") else { throw AgentOperationError.noSystemd }
 
+        progress(.uploading)
         let installer = try read(Self.installerName)
         let dir = try await remote(server, "umask 077; mktemp -d /tmp/massh-agent.XXXXXX")
             .trimmingCharacters(in: .whitespacesAndNewlines)

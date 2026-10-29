@@ -192,6 +192,16 @@
         }
       }
     },
+    "Checking the Server…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверяю сервер…"
+          }
+        }
+      }
+    },
     "Choose…": {
       "localizations": {
         "ru": {
@@ -1254,6 +1264,16 @@
         }
       }
     },
+    "Uploading the Agent…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Загружаю Agent…"
+          }
+        }
+      }
+    },
     "Uptime": {
       "localizations": {
         "ru": {
@@ -1290,6 +1310,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Посмотреть…"
+          }
+        }
+      }
+    },
+    "Waiting for sudo…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жду sudo…"
           }
         }
       }

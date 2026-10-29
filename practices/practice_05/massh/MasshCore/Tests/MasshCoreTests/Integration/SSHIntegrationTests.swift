@@ -59,6 +59,66 @@ struct SSHIntegrationTests {
         }
     }
 
+    /// A ControlMaster left behind by a crashed massh (or the user's own) already holds the connection: the tunnel
+    /// ssh then hands its forward to that master and exits 0, which must not read as a lost connection.
+    @Test func observingThroughAnExistingMaster() async throws {
+        try await withTestServer { box in
+            try await box.startTestAgent()
+            let master = Process()
+            master.executableURL = URL(filePath: box.ssh.executable)
+            master.arguments = box.ssh.multiplexed(master: true) + ["-o", "ControlPersist=no", "-N", "it"]
+            try master.run()
+            defer { master.terminate() }
+            var ready = false
+            for _ in 0..<50 where !ready {
+                ready = await box.ssh.hasMaster("it") != nil
+                if !ready { try await Task.sleep(for: .milliseconds(200)) }
+            }
+            #expect(ready)
+
+            let service = SSHObservationService(ssh: box.ssh)
+            var events = service.observe(server("it")).makeAsyncIterator()
+            var first: ObservationEvent?
+            while let e = await events.next() {
+                if e == .connecting { continue }
+                first = e
+                break
+            }
+            #expect(first.map(isSnapshot) == true, "got \(String(describing: first))")
+        }
+    }
+
+    /// A warmed-up Server opens its terminal over the tab master, and closing the Inspector's session (another Server
+    /// selected) leaves the tab running.
+    @Test func terminalTabOutlivesTheInspectorSession() async throws {
+        try await withTestServer { box in
+            try await box.startTestAgent()
+            let it = server("it")
+            await box.ssh.warmUp(it)
+            #expect(await box.ssh.hasMaster(it.name, controlPath: box.ssh.tabControlPath))
+
+            let tab = TerminalCommand.ssh(it, using: box.ssh)
+            let session = Task {
+                try await Subprocess.run(tab.executable, tab.arguments.dropLast() + ["-o", "BatchMode=yes", it.name, "sleep 3; echo alive"],
+                                         timeout: .seconds(15))
+            }
+            try await Task.sleep(for: .seconds(1))
+
+            // The Inspector observes, then stops: its tunnel and master close mid-way through the tab's command.
+            let service = SSHObservationService(ssh: box.ssh)
+            let inspector = Task {
+                for await e in service.observe(it) where isSnapshot(e) { return true }
+                return false
+            }
+            #expect(await inspector.value)
+
+            let result = try await session.value
+            #expect(result.status == 0)
+            #expect(result.output.contains("alive"))
+            await box.ssh.closeTabMaster(it)
+        }
+    }
+
     @Test func reachabilityThroughBastion() async throws {
         try await withTestServer { box in
             let monitor = SSHReachabilityMonitor(ssh: box.ssh, interval: .seconds(3600), wakeEvents: AsyncStream { _ in })
