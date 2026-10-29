@@ -1,21 +1,8 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "%@ (%lld)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@ (%2$lld)"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ (%2$lld)"
-          }
-        }
-      }
+    "%@ (%@)": {
+      "shouldTranslate": false
     },
     "%@ of %@": {
       "localizations": {
@@ -49,6 +36,9 @@
         }
       }
     },
+    "%@ · %@": {
+      "shouldTranslate": false
+    },
     "%@ — Read-Only": {
       "localizations": {
         "ru": {
@@ -65,22 +55,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ — сессия завершена"
-          }
-        }
-      }
-    },
-    "%@, %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "new",
-            "value": "%1$@, %2$@"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@, %2$@"
           }
         }
       }
@@ -188,16 +162,6 @@
         }
       }
     },
-    "Address": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Адрес"
-          }
-        }
-      }
-    },
     "Agent Is Newer Than massh": {
       "localizations": {
         "ru": {
@@ -207,9 +171,6 @@
           }
         }
       }
-    },
-    "CPU": {
-      "shouldTranslate": false
     },
     "Cancel": {
       "localizations": {
@@ -271,12 +232,12 @@
         }
       }
     },
-    "Command": {
+    "Collapsed": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Команда"
+            "value": "Свёрнуто"
           }
         }
       }
@@ -357,16 +318,6 @@
         }
       }
     },
-    "Cores": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ядра"
-          }
-        }
-      }
-    },
     "Defined in %@ through Include. massh does not write to Include files — edit it by hand.": {
       "localizations": {
         "ru": {
@@ -417,16 +368,6 @@
         }
       }
     },
-    "Docker Not Installed": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Docker не установлен"
-          }
-        }
-      }
-    },
     "Double-click a Server in the list or press Connect.": {
       "localizations": {
         "ru": {
@@ -467,6 +408,26 @@
         }
       }
     },
+    "Expanded": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Развёрнуто"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фильтр"
+          }
+        }
+      }
+    },
     "From Include file %@: read-only": {
       "localizations": {
         "ru": {
@@ -482,16 +443,6 @@
     },
     "IdentityFile": {
       "shouldTranslate": false
-    },
-    "Image": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Образ"
-          }
-        }
-      }
     },
     "Incoming": {
       "localizations": {
@@ -563,6 +514,16 @@
         }
       }
     },
+    "Localhost only": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Только localhost"
+          }
+        }
+      }
+    },
     "Memory": {
       "localizations": {
         "ru": {
@@ -583,22 +544,22 @@
         }
       }
     },
-    "Model": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Модель"
-          }
-        }
-      }
-    },
     "Name": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Имя"
+          }
+        }
+      }
+    },
+    "Name or command": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя или команда"
           }
         }
       }
@@ -733,6 +694,16 @@
         }
       }
     },
+    "Nothing matches “%@”": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ничего не найдено по «%@»"
+          }
+        }
+      }
+    },
     "OK": {
       "shouldTranslate": false
     },
@@ -786,6 +757,16 @@
         }
       }
     },
+    "Open to the network": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыты наружу"
+          }
+        }
+      }
+    },
     "Outgoing": {
       "localizations": {
         "ru": {
@@ -806,16 +787,6 @@
         }
       }
     },
-    "Owner": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Владелец"
-          }
-        }
-      }
-    },
     "Owner unknown: the Agent cannot see the process": {
       "localizations": {
         "ru": {
@@ -825,9 +796,6 @@
           }
         }
       }
-    },
-    "PID": {
-      "shouldTranslate": false
     },
     "Per core": {
       "localizations": {
@@ -901,16 +869,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Процессор"
-          }
-        }
-      }
-    },
-    "Proto": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Прот."
           }
         }
       }
@@ -991,16 +949,6 @@
         }
       }
     },
-    "Section": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Раздел"
-          }
-        }
-      }
-    },
     "Select a Server in the list to see what is running on it.": {
       "localizations": {
         "ru": {
@@ -1061,12 +1009,32 @@
         }
       }
     },
+    "Show All %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать все %lld"
+          }
+        }
+      }
+    },
     "Show Details": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Показать сведения"
+          }
+        }
+      }
+    },
+    "Show Top %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать первые %lld"
           }
         }
       }
@@ -1081,28 +1049,18 @@
         }
       }
     },
-    "Status": {
+    "Sort by": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Статус"
+            "value": "Сортировка"
           }
         }
       }
     },
     "Swap": {
       "shouldTranslate": false
-    },
-    "System": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Система"
-          }
-        }
-      }
     },
     "Terminal": {
       "localizations": {
@@ -1226,6 +1184,16 @@
         }
       }
     },
+    "Unknown owner": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Неизвестный владелец"
+          }
+        }
+      }
+    },
     "Unknown: the Server is behind a Bastion with no open connection": {
       "localizations": {
         "ru": {
@@ -1316,16 +1284,6 @@
         }
       }
     },
-    "Username": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Польз."
-          }
-        }
-      }
-    },
     "View…": {
       "localizations": {
         "ru": {
@@ -1369,13 +1327,20 @@
         }
       }
     },
+    "none": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "нет"
+          }
+        }
+      }
+    },
     "web-1": {
       "shouldTranslate": false
     },
     "~/.ssh/id_ed25519": {
-      "shouldTranslate": false
-    },
-    "—": {
       "shouldTranslate": false
     }
   },

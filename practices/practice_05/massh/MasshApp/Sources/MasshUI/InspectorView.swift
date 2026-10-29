@@ -1,50 +1,13 @@
 import MasshCore
 import SwiftUI
 
-enum InspectorTab: String, CaseIterable, Identifiable {
-    case overview, ports, processes, containers
-    var id: Self { self }
-
-    var title: String {
-        switch self {
-        case .overview: String(localized: "Overview")
-        case .ports: String(localized: "Ports")
-        case .processes: String(localized: "Processes")
-        case .containers: String(localized: "Containers")
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .overview: "gauge.with.dots.needle.33percent"
-        case .ports: "point.3.connected.trianglepath.dotted"
-        case .processes: "list.bullet.rectangle"
-        case .containers: "shippingbox"
-        }
-    }
-}
-
+/// The Inspector: one scrolling page with Overview, Containers, Processes and Ports for the selected Server (ADR 0007).
 struct InspectorView: View {
     var model: AppModel
-    @State private var tab: InspectorTab = .overview
 
     var body: some View {
         if let server = model.selectedServer {
-            VStack(spacing: 0) {
-                // Icon selector like Xcode's inspector tabs.
-                Picker("Section", selection: $tab) {
-                    ForEach(InspectorTab.allCases) { tab in
-                        Label(tab.title, systemImage: tab.symbol).labelStyle(.iconOnly).help(tab.title).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                Divider()
-                InspectorContent(model: model, server: server, tab: tab)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            }
+            InspectorContent(model: model, server: server)
         } else {
             ContentUnavailableView("No Server Selected", systemImage: "server.rack",
                                    description: Text("Select a Server in the list to see what is running on it."))
@@ -55,7 +18,11 @@ struct InspectorView: View {
 struct InspectorContent: View {
     var model: AppModel
     var server: Server
-    var tab: InspectorTab
+
+    // View state, so 1 Hz Snapshot updates keep the search, order and collapsed sections. It is kept on purpose
+    // when another Server is selected: a search for "nginx" or a collapsed Overview applies to the next one too.
+    @State private var query = ProcessQuery()
+    @State private var collapsed: Set<InspectorPart> = []
 
     var inspector: InspectorModel { model.inspector }
 
@@ -63,15 +30,11 @@ struct InspectorContent: View {
         VStack(spacing: 0) {
             banners
             if let snapshot = inspector.snapshot {
-                Group {
-                    switch tab {
-                    case .overview: OverviewView(snapshot: snapshot, history: inspector.history)
-                    case .ports: PortsTable(ports: snapshot.ports)
-                    case .processes: ProcessesTable(processes: snapshot.processes)
-                    case .containers: ContainersTable(docker: snapshot.docker)
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        page(snapshot)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 // Frozen numbers must not pass for live ones.
                 .opacity(inspector.isLive ? 1 : 0.45)
                 .saturation(inspector.isLive ? 1 : 0)
@@ -80,6 +43,27 @@ struct InspectorContent: View {
                 placeholder.frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+    }
+
+    @ViewBuilder private func page(_ snapshot: Snapshot) -> some View {
+        InspectorSection(part: .overview, isExpanded: expanded(.overview)) {
+            OverviewView(snapshot: snapshot, history: inspector.history)
+        }
+        InspectorSection(part: .containers, count: snapshot.docker.count, isExpanded: expanded(.containers)) {
+            ContainersGrid(docker: snapshot.docker)
+        }
+        InspectorSection(part: .processes, count: snapshot.processes.count, isExpanded: expanded(.processes)) {
+            ProcessControls(query: $query)
+        } content: {
+            ProcessList(processes: snapshot.processes, query: $query)
+        }
+        InspectorSection(part: .ports, count: snapshot.ports.count, isExpanded: expanded(.ports)) {
+            PortsView(ports: snapshot.ports)
+        }
+    }
+
+    private func expanded(_ part: InspectorPart) -> Binding<Bool> {
+        Binding(get: { !collapsed.contains(part) }, set: { if $0 { collapsed.remove(part) } else { collapsed.insert(part) } })
     }
 
     @ViewBuilder private var banners: some View {
@@ -167,13 +151,13 @@ struct InspectorBanner<Accessory: View>: View {
                 Text(title).font(.headline)
                 Text(detail).font(.callout).foregroundStyle(.secondary).lineLimit(3)
             }
-            Spacer(minLength: 4)
+            Spacer(minLength: Space.xs)
             accessory
         }
-        .padding(10)
-        .glassEffect(.regular, in: .rect(cornerRadius: 10))
-        .padding(.horizontal, 10)
-        .padding(.top, 8)
+        .padding(Space.md)
+        .glassEffect(.regular, in: .rect(cornerRadius: Radius.floating))
+        .padding(.horizontal, Space.lg)
+        .padding(.top, Space.sm)
         .accessibilityElement(children: .combine)
     }
 }
@@ -186,7 +170,7 @@ struct InspectorBanner<Accessory: View>: View {
             try? await Task.sleep(for: .milliseconds(100))
             model.selectedServerName = "web-1"
         }
-        .frame(width: 360, height: 760)
+        .frame(width: 1000, height: 760)
 }
 
 #Preview("Inspector — live") { inspectorPreview(.live) }

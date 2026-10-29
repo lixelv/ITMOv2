@@ -2,7 +2,7 @@ import Charts
 import MasshCore
 import SwiftUI
 
-/// System overview in the style of an Xcode inspector: grouped sections, gauges and charts since connecting.
+/// System overview: a line of facts, then CPU, memory, disk and network tiles with charts since connecting.
 struct OverviewView: View {
     var snapshot: Snapshot
     var history: [InspectorModel.Sample]
@@ -10,108 +10,106 @@ struct OverviewView: View {
     private var o: Snapshot.Overview { snapshot.overview }
 
     var body: some View {
-        Form {
-            Section("System") {
-                LabeledContent("OS", value: o.os)
-                LabeledContent("Kernel", value: o.kernel)
-                LabeledContent("Uptime", value: Format.uptime(o.uptimeSeconds))
-                LabeledContent("Load average") {
-                    Text(Format.load(o.loadAverage)).monospacedDigit()
-                }
+        VStack(alignment: .leading, spacing: Space.md) {
+            FlowLayout(spacing: Space.lg) {
+                Fact(title: String(localized: "OS"), value: o.os)
+                Fact(title: String(localized: "Kernel"), value: o.kernel, mono: true)
+                Fact(title: String(localized: "Uptime"), value: Format.uptime(o.uptimeSeconds))
+                Fact(title: String(localized: "Load average"), value: Format.load(o.loadAverage), mono: true)
             }
-
-            Section("Processor") {
-                LabeledContent("Model") { Text(o.cpu.model).lineLimit(2).multilineTextAlignment(.trailing) }
-                LabeledContent("Cores", value: "\(o.cpu.cores)")
-                UsageGauge(title: String(localized: "Usage"), fraction: o.cpu.usagePercent / 100, value: Format.percent(o.cpu.usagePercent))
-                if !o.cpu.perCorePercent.isEmpty {
-                    PerCoreBars(values: o.cpu.perCorePercent)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: Space.md, alignment: .top)], alignment: .leading, spacing: Space.md) {
+                Tile(title: String(localized: "Processor"), symbol: "cpu", detail: "\(o.cpu.cores) × \(o.cpu.model)") {
+                    Meter(title: String(localized: "Usage"), value: Format.percent(o.cpu.usagePercent), fraction: o.cpu.usagePercent / 100)
+                    if !o.cpu.perCorePercent.isEmpty {
+                        PerCoreBars(values: o.cpu.perCorePercent)
+                    }
+                    // Charts are off by default; uncomment to bring them back.
+                    // HistoryChart(history: history, series: [.init(name: "CPU", value: \.cpuPercent)], percent: true)
                 }
-                HistoryChart(history: history, series: [.init(name: "CPU", value: \.cpuPercent)], percent: true)
-            }
-
-            Section("Memory") {
-                UsageGauge(title: "RAM", usage: o.memory)
-                if let swap = o.swap {
-                    if swap.totalBytes > 0 {
-                        UsageGauge(title: "Swap", usage: swap)
-                    } else {
-                        LabeledContent("Swap", value: "none")
+                Tile(title: String(localized: "Memory"), symbol: "memorychip") {
+                    Meter(title: "RAM", usage: o.memory)
+                    if let swap = o.swap {
+                        if swap.totalBytes > 0 {
+                            Meter(title: "Swap", usage: swap)
+                        } else {
+                            LabeledContent("Swap", value: String(localized: "none")).font(.caption)
+                        }
+                    }
+                    // HistoryChart(history: history, series: [.init(name: "RAM", value: \.memoryPercent)], percent: true)
+                }
+                Tile(title: String(localized: "Disks"), symbol: "internaldrive") {
+                    if o.disks.isEmpty {
+                        Text("No disk data").font(.caption).foregroundStyle(.secondary)
+                    }
+                    ForEach(o.disks, id: \.mountPoint) { disk in
+                        Meter(title: disk.mountPoint, usage: disk.usage)
                     }
                 }
-                HistoryChart(history: history, series: [.init(name: "RAM", value: \.memoryPercent)], percent: true)
-            }
-
-            Section("Disks") {
-                if o.disks.isEmpty {
-                    Text("No disk data").foregroundStyle(.secondary)
+                Tile(title: String(localized: "Network"), symbol: "network") {
+                    HStack(spacing: Space.lg) {
+                        Rate(symbol: "arrow.down", label: String(localized: "Incoming"), bytesPerSecond: o.network.rxBytesPerSecond)
+                        Rate(symbol: "arrow.up", label: String(localized: "Outgoing"), bytesPerSecond: o.network.txBytesPerSecond)
+                    }
+                    .font(.caption)
+                    // HistoryChart(history: history, series: [
+                    //     .init(name: String(localized: "Incoming"), value: \.rxBytesPerSecond),
+                    //     .init(name: String(localized: "Outgoing"), value: \.txBytesPerSecond),
+                    // ], percent: false)
                 }
-                ForEach(o.disks, id: \.mountPoint) { disk in
-                    UsageGauge(title: disk.mountPoint, usage: disk.usage, warnsWhenFull: true)
-                }
-            }
-
-            Section("Network") {
-                LabeledContent {
-                    Text(Format.rate(Double(o.network.rxBytesPerSecond))).monospacedDigit()
-                } label: {
-                    Label("Incoming", systemImage: "arrow.down")
-                }
-                LabeledContent {
-                    Text(Format.rate(Double(o.network.txBytesPerSecond))).monospacedDigit()
-                } label: {
-                    Label("Outgoing", systemImage: "arrow.up")
-                }
-                HistoryChart(history: history, series: [
-                    .init(name: String(localized: "Incoming"), value: \.rxBytesPerSecond),
-                    .init(name: String(localized: "Outgoing"), value: \.txBytesPerSecond),
-                ], percent: false)
             }
         }
-        .formStyle(.grouped)
     }
 }
 
-/// Used/total bar. Disks turn orange past 80 % and red past 90 %.
-struct UsageGauge: View {
+private struct Fact: View {
     var title: String
-    var fraction: Double
     var value: String
-    var warnsWhenFull = false
-
-    init(title: String, fraction: Double, value: String) {
-        self.title = title
-        self.fraction = fraction
-        self.value = value
-    }
-
-    init(title: String, usage: Snapshot.Usage, warnsWhenFull: Bool = false) {
-        self.title = title
-        fraction = usage.fraction
-        value = String(localized: "\(Format.bytes(usage.usedBytes)) of \(Format.bytes(usage.totalBytes))")
-        self.warnsWhenFull = warnsWhenFull
-    }
+    var mono = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                Spacer()
-                Text(value).foregroundStyle(.secondary).monospacedDigit()
-            }
-            Gauge(value: min(max(fraction, 0), 1)) { EmptyView() }
-                .gaugeStyle(.linearCapacity)
-                .tint(tint)
-                .labelsHidden()
+        VStack(alignment: .leading, spacing: Space.xxs) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(value).font(mono ? .callout.monospaced() : .callout).lineLimit(1).contentTransition(.numericText())
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(title)
-        .accessibilityValue("\(value), \(Format.percent(fraction * 100))")
+        .accessibilityElement(children: .combine)
     }
+}
 
-    private var tint: Color {
-        guard warnsWhenFull else { return Geist.blue }
-        return fraction > 0.9 ? Geist.red : fraction > 0.8 ? Geist.amber : Geist.blue
+private struct Rate: View {
+    var symbol: String
+    var label: String
+    var bytesPerSecond: UInt64
+
+    var body: some View {
+        Label { Text(Format.rate(Double(bytesPerSecond))).monospacedDigit().contentTransition(.numericText()) }
+            icon: { Image(systemName: symbol) }
+            .accessibilityLabel(label)
+    }
+}
+
+private struct Tile<Content: View>: View {
+    var title: String
+    var symbol: String
+    var detail: String?
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.sm) {
+            Label(title, systemImage: symbol).font(.headline)
+            if let detail {
+                Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle).help(detail)
+            }
+            content
+        }
+        .card()
+    }
+}
+
+extension Meter {
+    /// Used of total, e.g. "3.1 GB of 8 GB"; disks and memory warn as they fill up.
+    init(title: String, usage: Snapshot.Usage) {
+        self.init(title: title, value: String(localized: "\(Format.bytes(usage.usedBytes)) of \(Format.bytes(usage.totalBytes))"),
+                  fraction: usage.fraction)
     }
 }
 
@@ -199,6 +197,8 @@ struct HistoryChart: View {
                                      rxBytesPerSecond: Double(s.overview.network.rxBytesPerSecond),
                                      txBytesPerSecond: Double(s.overview.network.txBytesPerSecond))
     }
-    OverviewView(snapshot: FakeSnapshots.make(tick: 60), history: history)
-        .frame(width: 360, height: 900)
+    ScrollView {
+        OverviewView(snapshot: FakeSnapshots.make(tick: 60), history: history).padding(Space.lg)
+    }
+    .frame(width: 900, height: 600)
 }
