@@ -20,7 +20,7 @@ public struct TerminalCommand: Sendable, Hashable {
 
 public enum AgentRelease {
     /// Version of the Agent binaries bundled with this build of massh.
-    public static let bundledVersion = "0.1.0"
+    public static let bundledVersion = "0.1.1"
 
     /// Whether `installed` is older than `bundled`, comparing dotted numeric versions.
     public static func isOutdated(_ installed: String, comparedTo bundled: String = bundledVersion) -> Bool {

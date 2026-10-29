@@ -38,9 +38,10 @@ func (c *clock) now() time.Time { return c.t }
 
 func newCollector(root string, c *clock) *collect.Collector {
 	return &collect.Collector{
-		Root:    root,
-		Version: "0.1.0",
-		Now:     c.now,
+		Root:     root,
+		Version:  "0.1.0",
+		Now:      c.now,
+		PageSize: 4096,
 		Statfs: func(path string) (total, free uint64, err error) {
 			switch path {
 			case filepath.Join(root, "/"):

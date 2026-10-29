@@ -24,6 +24,9 @@ type Collector struct {
 	// Statfs returns total and available bytes of the filesystem at path.
 	Statfs func(path string) (total, free uint64, err error)
 
+	// PageSize converts the RSS in /proc/<pid>/stat to bytes; 0 means the Server's own page size.
+	PageSize int
+
 	SkipProcesses bool
 	// Docker lists running Containers; nil or failing means Docker is not installed or not reachable.
 	Docker interface {
@@ -31,6 +34,15 @@ type Collector struct {
 	}
 
 	prev *sample
+	// User and command line of each Process by PID, valid while its start time is unchanged.
+	static map[int]procStatic
+	// /etc/passwd as uid -> name, reread when the file changes.
+	users     map[string]string
+	usersStat os.FileInfo
+	// Port owners from the last walk over /proc/<pid>/fd, and the listening sockets seen then (see ports).
+	owners    map[string]*snapshot.Owner
+	scanned   map[string]bool
+	scannedAt time.Time
 }
 
 // sample holds the cumulative counters rates are derived from.
@@ -43,7 +55,11 @@ type sample struct {
 	containerCPU map[string][2]uint64
 }
 
-func (c *Collector) Reset() { c.prev = nil }
+func (c *Collector) Reset() {
+	c.prev = nil
+	c.static, c.users, c.usersStat = nil, nil, nil
+	c.owners, c.scanned = nil, nil
+}
 
 func (c *Collector) Collect() snapshot.Snapshot {
 	now := time.Now
@@ -64,7 +80,7 @@ func (c *Collector) Collect() snapshot.Snapshot {
 		for i, p := range procs {
 			s.Processes[i] = p.Process
 		}
-		s.Ports = c.ports(procs)
+		s.Ports = c.ports(procs, cur.at)
 	}
 	c.containers(cur, &s)
 	c.prev = cur

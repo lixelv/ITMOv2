@@ -47,7 +47,7 @@ struct AgentLifecycleTests {
 
             let service = SSHObservationService(ssh: box.ssh)
             let installed = try #require(await firstSnapshot(service, "it"))
-            #expect(installed.agentVersion == "0.1.0")
+            #expect(installed.agentVersion == AgentRelease.bundledVersion)
             #expect(installed.docker != .notInstalled, "Agent in group docker sees Docker")
             #expect(installed.ports.contains { $0.port == 22 && $0.owner != nil }, "capabilities let it see port owners")
 
