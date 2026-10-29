@@ -34,9 +34,38 @@ enum Geist {
                         blue: UInt16(rgb & 0xFF) * 257)
     }
 
+    /// Card and tile outline (DESIGN.md, Depth level 1).
+    static let cardStroke = gray700.opacity(0.35)
+    /// Fill behind accent chips (ports open to the network).
+    static let accentFill = blue.opacity(0.12)
+
     private static func dynamic(light: UInt32, dark: UInt32) -> SwiftUI.Color {
         SwiftUI.Color(nsColor: NSColor(name: nil) { appearance in
             nsColor(appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light)
         })
     }
+}
+
+/// Spacing scale on a 4 pt base (DESIGN.md, Layout).
+enum Space {
+    /// Hairline gaps: chip padding, a label over its value.
+    static let xxs: CGFloat = 2
+    static let xs: CGFloat = 4
+    static let sm: CGFloat = 8
+    static let md: CGFloat = 12
+    static let lg: CGFloat = 16
+    static let xl: CGFloat = 24
+}
+
+extension Font {
+    /// Machine data in small print: images, commands, ports (DESIGN.md, Typography).
+    static let machine = Font.system(size: 11, design: .monospaced)
+}
+
+/// Corner radii (DESIGN.md, Layout). Chips are capsules.
+enum Radius {
+    static let bar: CGFloat = 2
+    static let control: CGFloat = 6
+    static let card: CGFloat = 8
+    static let floating: CGFloat = 12
 }

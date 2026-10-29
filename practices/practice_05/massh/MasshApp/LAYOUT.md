@@ -1,8 +1,7 @@
 # massh window layout
 
-Design maturity: **L0** — no DESIGN.md. The design language is Apple's own (ADR 0003): system controls,
-system colors and materials, Liquid Glass from the OS. No custom palette or type scale is defined; sizes marked
-*provisional* below are starting points to revisit if a DESIGN.md is ever written.
+Design maturity: **L1** — the design language is in [DESIGN.md](DESIGN.md) ("точный, плотный, приборная панель"):
+system chrome and Liquid Glass (ADR 0003), Geist colors, SF Mono for machine data, `Space`/`Radius` tokens.
 
 **Pattern:** list-detail with two modes (ADR 0007). `NavigationSplitView` (sidebar + detail); the detail is either
 the Terminal or the Inspector, full width. The Terminal stays in the hierarchy under the Inspector so its sessions
@@ -13,7 +12,7 @@ keep running.
 | Toolbar | Connect (`terminal`), Add Server (`plus`), `Terminal \| Inspector` segmented mode picker (principal) | Glass toolbar from the system. ⌘1/⌘2 in the View menu. Connect, double click and Agent actions switch to Terminal; selecting a Server keeps the mode |
 | Sidebar | `List(selection:)`, one row per Server: status symbol, name, `HostName` secondary | Status uses shape *and* color (`checkmark.circle.fill` / `xmark.circle.fill` / `questionmark.circle`) plus an accessibility value, never color alone. `Include` Servers carry a `lock` badge and their file in the tooltip. Context menu holds every Server action. Width ideal 220 (*provisional*) |
 | Terminal | Tab strip (one tab per terminal, close buttons) over a SwiftTerm view | Empty state: `ContentUnavailableView` with Connect. Ended session: bar at the bottom of the tab with exit code and Reconnect |
-| Inspector | Icon tab picker (Overview, Ports, Processes, Containers); state banner above content | Full width of the detail. Overview is a grouped `Form` with gauges and Swift Charts (chart height 56, *provisional*); the other tabs are sortable `Table`s |
+| Inspector | One scrolling page (ADR 0007): Overview tiles, Container cards, Process rows with search and order, Ports grouped by owner; state banners above | Sections collapse and pin their headers. Components and tokens in DESIGN.md. History charts are off by default |
 | Sheets | Server editor (`Form`, six fields), confirmation dialogs for delete and Agent install/update/remove | Errors from the store shown inline in the form footer |
 
 ## Heuristic notes
@@ -23,7 +22,8 @@ keep running.
 - *Error prevention / user control:* deletes and every Agent action are confirmed; declining the Agent leaves the
   terminal and status fully usable.
 - *Consistency:* standard controls only; the toolbar and context menu expose the same actions.
-- *No flicker:* numbers use `monospacedDigit()` so 1 Hz updates do not shift layout.
+- *No flicker:* numbers use `monospacedDigit()` and `.numericText()` so 1 Hz updates do not shift layout.
+- *Minimalism:* Processes show the top 50 with "Show All"; empty Docker or ports are one line, not a full-page placeholder.
 
 ## Icon, languages, appearance
 
