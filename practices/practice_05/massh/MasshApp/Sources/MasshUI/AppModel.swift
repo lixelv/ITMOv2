@@ -98,6 +98,11 @@ public enum EditorMode: Identifiable, Hashable {
     }
 }
 
+/// What the window shows to the right of the Server List (ADR 0007).
+public enum WindowMode: Hashable, CaseIterable, Sendable {
+    case terminal, inspector
+}
+
 @MainActor
 @Observable
 public final class AppModel {
@@ -115,7 +120,7 @@ public final class AppModel {
             if let tab = tabs.first(where: { $0.id == activeTabID }) { selectedServerName = tab.serverName }
         }
     }
-    public var isInspectorPresented = true
+    public var windowMode: WindowMode = .terminal
     public var editor: EditorMode?
     public var confirmation: PendingConfirmation?
     /// Problems from Agent operations, shown as an alert.
@@ -176,6 +181,7 @@ public final class AppModel {
     public func open(_ tab: TerminalTab) {
         tabs.append(tab)
         activeTabID = tab.id
+        windowMode = .terminal
     }
 
     public func close(_ tabID: TerminalTab.ID) {

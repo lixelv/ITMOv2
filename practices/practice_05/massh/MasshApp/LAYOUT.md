@@ -4,15 +4,16 @@ Design maturity: **L0** — no DESIGN.md. The design language is Apple's own (AD
 system colors and materials, Liquid Glass from the OS. No custom palette or type scale is defined; sizes marked
 *provisional* below are starting points to revisit if a DESIGN.md is ever written.
 
-**Pattern:** list-detail with inspector — the Xcode window. `NavigationSplitView` (sidebar + detail) plus the
-`.inspector` column.
+**Pattern:** list-detail with two modes (ADR 0007). `NavigationSplitView` (sidebar + detail); the detail is either
+the Terminal or the Inspector, full width. The Terminal stays in the hierarchy under the Inspector so its sessions
+keep running.
 
 | Zone | Components | Notes |
 |------|------------|-------|
-| Toolbar | Connect (`terminal`), Add Server (`plus`), inspector toggle (`sidebar.right`, trailing) | Glass toolbar from the system |
+| Toolbar | Connect (`terminal`), Add Server (`plus`), `Terminal \| Inspector` segmented mode picker (principal) | Glass toolbar from the system. ⌘1/⌘2 in the View menu. Connect, double click and Agent actions switch to Terminal; selecting a Server keeps the mode |
 | Sidebar | `List(selection:)`, one row per Server: status symbol, name, `HostName` secondary | Status uses shape *and* color (`checkmark.circle.fill` / `xmark.circle.fill` / `questionmark.circle`) plus an accessibility value, never color alone. `Include` Servers carry a `lock` badge and their file in the tooltip. Context menu holds every Server action. Width ideal 220 (*provisional*) |
-| Workspace | Tab strip (one tab per terminal, close buttons) over a SwiftTerm view | Empty state: `ContentUnavailableView` with Connect. Ended session: bar at the bottom of the tab with exit code and Reconnect |
-| Inspector | Icon tab picker (Overview, Ports, Processes, Containers) like Xcode's inspector selector; state banner above content | Width 320–480 (*provisional*). Overview is a grouped `Form` with gauges and Swift Charts (chart height 56, *provisional*); the other tabs are sortable `Table`s |
+| Terminal | Tab strip (one tab per terminal, close buttons) over a SwiftTerm view | Empty state: `ContentUnavailableView` with Connect. Ended session: bar at the bottom of the tab with exit code and Reconnect |
+| Inspector | Icon tab picker (Overview, Ports, Processes, Containers); state banner above content | Full width of the detail. Overview is a grouped `Form` with gauges and Swift Charts (chart height 56, *provisional*); the other tabs are sortable `Table`s |
 | Sheets | Server editor (`Form`, six fields), confirmation dialogs for delete and Agent install/update/remove | Errors from the store shown inline in the form footer |
 
 ## Heuristic notes

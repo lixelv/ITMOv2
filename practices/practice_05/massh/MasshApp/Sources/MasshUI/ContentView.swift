@@ -1,7 +1,7 @@
 import MasshCore
 import SwiftUI
 
-/// The Xcode-style window: Server List, terminal workspace, inspector.
+/// The window: Server List on the left, and to its right either the Terminal or the Inspector (ADR 0007).
 public struct ContentView: View {
     @Bindable var model: AppModel
 
@@ -14,11 +14,18 @@ public struct ContentView: View {
             ServerListView(model: model)
                 .navigationSplitViewColumnWidth(min: 180, ideal: 220, max: 320)
         } detail: {
-            WorkspaceView(model: model)
-                .inspector(isPresented: $model.isInspectorPresented) {
+            // The Terminal stays in the hierarchy under the Inspector so its sessions keep running.
+            let showsTerminal = model.windowMode == .terminal
+            ZStack {
+                WorkspaceView(model: model)
+                    .opacity(showsTerminal ? 1 : 0)
+                    .allowsHitTesting(showsTerminal)
+                    .accessibilityHidden(!showsTerminal)
+                if !showsTerminal {
                     InspectorView(model: model)
-                        .inspectorColumnWidth(min: 320, ideal: 360, max: 480)
+                        .background(.background)
                 }
+            }
         }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
@@ -28,10 +35,13 @@ public struct ContentView: View {
                 Button("Add Server", systemImage: "plus") { model.editor = .add }
                     .help("Add a Server to ~/.ssh/config")
             }
-            ToolbarItem(placement: .primaryAction) {
-                Button("Inspector", systemImage: "sidebar.right") { model.isInspectorPresented.toggle() }
-                    .help(model.isInspectorPresented ? String(localized: "Hide Inspector") : String(localized: "Show Inspector"))
-                    .keyboardShortcut("0", modifiers: [.command, .option])
+            ToolbarItem(placement: .principal) {
+                Picker("Mode", selection: $model.windowMode) {
+                    ForEach(WindowMode.allCases, id: \.self) { mode in
+                        Label(mode.title, systemImage: mode.symbol).labelStyle(.iconOnly).help(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
         }
         .navigationTitle(model.selectedServerName ?? "massh")
@@ -64,6 +74,29 @@ public struct ContentView: View {
         }
         .tint(Geist.blue)
         .task { model.start() }
+    }
+}
+
+extension WindowMode {
+    var title: String {
+        switch self {
+        case .terminal: String(localized: "Terminal")
+        case .inspector: String(localized: "Inspector")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .terminal: "terminal"
+        case .inspector: "gauge.with.dots.needle.33percent"
+        }
+    }
+
+    var shortcut: KeyEquivalent {
+        switch self {
+        case .terminal: "1"
+        case .inspector: "2"
+        }
     }
 }
 

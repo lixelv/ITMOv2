@@ -17,5 +17,6 @@ let package = Package(
         // Views and view models; SwiftUI Previews run here on MasshCore fakes.
         .target(name: "MasshUI", dependencies: ["MasshCore", "SwiftTerm"]),
         .executableTarget(name: "MasshApp", dependencies: ["MasshUI"]),
+        .testTarget(name: "MasshUITests", dependencies: ["MasshUI", "MasshCore"]),
     ]
 )

@@ -23,7 +23,7 @@ struct WorkspaceView: View {
                 Divider()
                 ZStack {
                     ForEach(model.tabs) { tab in
-                        let active = tab.id == model.activeTabID
+                        let active = tab.id == model.activeTabID && model.windowMode == .terminal
                         TerminalPane(model: model, tab: tab, isActive: active)
                             .opacity(active ? 1 : 0)
                             .allowsHitTesting(active)

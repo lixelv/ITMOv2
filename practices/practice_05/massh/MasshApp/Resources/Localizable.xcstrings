@@ -477,16 +477,6 @@
         }
       }
     },
-    "Hide Inspector": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скрыть инспектор"
-          }
-        }
-      }
-    },
     "HostName": {
       "shouldTranslate": false
     },
@@ -579,6 +569,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Память"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Режим"
           }
         }
       }
@@ -1071,16 +1071,6 @@
         }
       }
     },
-    "Show Inspector": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Показать инспектор"
-          }
-        }
-      }
-    },
     "Something went wrong": {
       "localizations": {
         "ru": {
@@ -1110,6 +1100,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Система"
+          }
+        }
+      }
+    },
+    "Terminal": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Терминал"
           }
         }
       }

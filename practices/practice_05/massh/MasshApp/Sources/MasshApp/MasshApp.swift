@@ -40,7 +40,6 @@ struct MasshApp: App {
         .windowToolbarStyle(.unified)
         .commands {
             SidebarCommands()
-            InspectorCommands()
             ServerCommands(model: model)
         }
     }

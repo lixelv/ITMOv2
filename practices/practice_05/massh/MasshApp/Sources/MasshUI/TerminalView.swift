@@ -41,6 +41,9 @@ struct TerminalSurface: NSViewRepresentable {
         }
         if isActive, view.window?.firstResponder !== view {
             DispatchQueue.main.async { view.window?.makeFirstResponder(view) }
+        } else if !isActive, view.window?.firstResponder === view {
+            // A hidden terminal (another tab, or the Inspector on top) must not keep receiving keystrokes.
+            DispatchQueue.main.async { if view.window?.firstResponder === view { view.window?.makeFirstResponder(nil) } }
         }
     }
 

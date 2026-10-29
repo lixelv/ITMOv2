@@ -122,9 +122,9 @@ struct ServerActions: View {
 
     var body: some View {
         Button("Connect", systemImage: "terminal") { model.connect(server) }
-        Button("Show Details", systemImage: "sidebar.right") {
+        Button("Show Details", systemImage: WindowMode.inspector.symbol) {
             model.selectedServerName = server.name
-            model.isInspectorPresented = true
+            model.windowMode = .inspector
         }
         Divider()
         Button(server.isReadOnly ? String(localized: "View…") : String(localized: "Edit…"), systemImage: "pencil") { model.editor = .edit(server) }

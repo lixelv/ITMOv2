@@ -10,6 +10,13 @@ public struct ServerCommands: Commands {
     }
 
     public var body: some Commands {
+        CommandGroup(before: .sidebar) {
+            ForEach(WindowMode.allCases, id: \.self) { mode in
+                Toggle(mode.title, isOn: Binding(get: { model.windowMode == mode }, set: { if $0 { model.windowMode = mode } }))
+                    .keyboardShortcut(mode.shortcut, modifiers: .command)
+            }
+            Divider()
+        }
         CommandMenu("Server") {
             let server = model.selectedServer
             Button("Connect") { model.connect() }
