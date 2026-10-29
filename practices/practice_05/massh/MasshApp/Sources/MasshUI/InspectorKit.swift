@@ -2,6 +2,7 @@ import MasshCore
 import SwiftUI
 
 /// Thin fill bar (DESIGN.md: 4 pt, threshold colors). Above 80 % amber, above 90 % red when `warns` is set.
+/// Not animated: rows re-sort instantly on each Snapshot, and a sliding bar would lag behind its row.
 struct MeterBar: View {
     var fraction: Double
     var warns = true
@@ -14,7 +15,6 @@ struct MeterBar: View {
             }
         }
         .frame(height: 4)
-        .animation(.easeOut(duration: 0.3), value: clamped)
         .accessibilityHidden(true)
     }
 
