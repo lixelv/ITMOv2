@@ -39,3 +39,13 @@ _Avoid_: Docker app, pod
 **Snapshot**:
 Полное состояние Server в один момент: обзор системы, порты, Process и Container вместе.
 _Avoid_: Metrics, report, stats
+
+### Окно
+
+**Terminal**:
+Режим окна, в котором справа от Server List открыты терминальные вкладки к Server.
+_Avoid_: Консоль, shell-панель
+
+**Inspector**:
+Режим окна, в котором справа от Server List на всю ширину показано состояние выбранного Server по его Snapshot.
+_Avoid_: Информационная панель, дашборд, правая колонка
